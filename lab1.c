@@ -270,8 +270,7 @@ int main(int argc, char* argv[])
 
 	if (MAIN_DEBUG)
 	{
-		trace_printf("Welcome to Noah Rondeau and 
-					Philip Itok's CENG 355 Final Project\n");
+		trace_printf("ECE355\n");
 		trace_printf("System clock: %u Hz\n\n", SystemCoreClock);
 	}
 
