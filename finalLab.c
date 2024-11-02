@@ -54,6 +54,7 @@
 /* TEST PRINTS */
 #define MAIN_DEBUG 1
 #define ADC_DEBUG 1
+#define EXTI_DEBUG 0
 
 /*****************************************************************/
 /**                            TYPEDEFS                         **/
@@ -137,6 +138,12 @@ void SystemClock48MHz( void )
 }
 
 /*****************************************************************/
+/**                       Global Variables                      **/
+/*****************************************************************/
+
+volatile ADC_Typedef pot;  //potentiometer
+
+/*****************************************************************/
 /**                              MAIN                           **/
 /*****************************************************************/
 
@@ -150,11 +157,12 @@ int main(int argc, char* argv[])
 		trace_printf("System clock: %u Hz\n\n", SystemCoreClock);
 	}
 
-	myGPIOA_Init();		// Initialize I/O port PA
-	myTIM2_Init();		// Initialize timer TIM2
-	EXTI_Init();		// Initialize EXTI
+	myGPIOA_Init();				// Initialize I/O port PA
+	myTIM2_Init();				// Initialize timer TIM2
+	EXTI_Init();				// Initialize EXTI
 
-	//	ADC_Init();
+
+	cons_ADC ( &pot );	// Initialize potentiometer resource (ADC)
 	while (1) {}
 	return 0;
 
@@ -304,9 +312,11 @@ void EXTI2_3_IRQHandler()
             count = TIM2->CNT;
             period = (float)count/(float)SystemCoreClock;
             frequency = 1/period;
-            trace_printf("Count: %u\n", count);
-            trace_printf("Period: %u\n", (unsigned int)(period*1000000));
-            trace_printf("Frequency: %u\n", (unsigned int)frequency);
+            if (EXTI_DEBUG) {
+            	trace_printf("Count: %u\n", count);
+            	trace_printf("Period: %u\n", (unsigned int)(period*1000000));
+            	trace_printf("Frequency: %u\n", (unsigned int)frequency);
+            }
 		}
 		// 2. Clear EXTI2 interrupt pending flag (EXTI->PR).
 		// NOTE: A pending register (PR) bit is cleared
