@@ -54,7 +54,7 @@
 /* TEST PRINTS (FOR DEBUGGING PURPOSES) */
 #define MAIN_DEBUG 1
 #define ADC_DEBUG 0
-#define EXTI_DEBUG 1
+#define FREQ_DEBUG 1
 #define ENABLE_CAL 1
 
 /*****************************************************************/
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
 		adc_value = readADC();
 		resistance = toOhms(adc_value);
 		writeDAC(adc_value);
-		trace_printf("Resistance: %u\n", resistance);
+		// trace_printf("Resistance: %u\n", resistance);
 	}
 	return 0;
 
@@ -190,11 +190,23 @@ void myGPIOA_Init()
 	// Relevant register: RCC->AHBENR
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 
-	/* Configure PA2 as input from the function generator */
-	// Relevant register: GPIOA->MODER
-	GPIOA->MODER &= ~(GPIO_MODER_MODER2);	// Clear bits PA2
+	// MODER:
+	//
 
-	// Set GPIO PA5 and PA4 to Analog Mode, (Or I can use 0x3 << 10)
+	/* Configure PA0 (button) as input from the function generator */
+	// Relevant register: GPIOA->MODER
+	GPIOA->MODER &= ~(GPIO_MODER_MODER0);	// Clear bits PA0
+
+	/* Configure PA1 (555 timer) as input from the function generator */
+	// Relevant register: GPIOA->MODER
+	GPIOA->MODER &= ~(GPIO_MODER_MODER1);	// Set the PA1 bits to 00 (where 00 - input)
+
+	/* Configure PA2 (function generator) as input from the function generator */
+	// Relevant register: GPIOA->MODER
+	GPIOA->MODER &= ~(GPIO_MODER_MODER2);	// Set the PA2 bits to 00 (where 00 - input)
+
+
+	// Set GPIO PA5 and PA4 to Analog Mode, (Or I can use 0x3 << 10) // 11 - Analog
 	GPIOA->MODER |= 0xC00;	// Set GPIO Pin A to Analog Mode, (Or I can use 0x3 << 10)
 	GPIOA->MODER |= 0x300;	// (or 0x3 << 8)
 
@@ -202,9 +214,9 @@ void myGPIOA_Init()
 	/*Ensure no pull-up/pull-down for PA0*/
 	//	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR0);
 
-	/* Ensure no pull-up/pull-down for PA2 */
+	/* Ensure no pull-up/pull-down for PA1 and PA2 */
 	// Relevant register: GPIOA->PUPDR
-	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR2);
+	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR1 | GPIO_PUPDR_PUPDR2);
 }
 
 
@@ -250,7 +262,6 @@ void EXTI_Init() {
 
 	/* Unmask interrupts from EXTI2 and EXTI0 line */
 	// Relevant register: EXTI->IMR
-	//	EXTI-> IMR |= 0x05;
 	EXTI->IMR |= (EXTI_IMR_IM0 | EXTI_IMR_IM1 | EXTI_IMR_IM2);
 
 	/* Assign EXTI2 interrupt priority = 0 in NVIC */
@@ -284,13 +295,15 @@ void TIM2_IRQHandler()
 
 void button_push() {
 	if ((EXTI->PR & EXTI_PR_PR0) != 0){
+
 		if((GPIOA->IDR & GPIO_IDR_0) != 0){
 			// Wait for button to be released (PA0 = 0)
 			while((GPIOA->IDR & GPIO_IDR_0) != 0) {}
 			trace_printf("<<<<<<<<<<<<<<< Button detected >>>>>>>>>>>>>>>\n");
 		}
+		EXTI->PR |= EXTI_PR_PR0;
 	}
-	EXTI->PR |= EXTI_PR_PR0;
+	// EXTI->PR |= EXTI_PR_PR1;
 }
 
 void measure_frequency() {
@@ -326,18 +339,20 @@ void measure_frequency() {
             count = TIM2->CNT;
             period = (float)count/(float)SystemCoreClock;
             frequency = 1/period;
-            if (EXTI_DEBUG) {
+            // Bring this block of code to somewhere else
+            if (FREQ_DEBUG) {
             	trace_printf("Count: %u\n", count);
             	trace_printf("Period: %u\n", (unsigned int)(period*1000000));
             	trace_printf("Frequency: %u\n", (unsigned int)frequency);
             }
+            // ****************************************
 		}
 
 		// 2. Clear EXTI2 interrupt pending flag (EXTI->PR).
 		// NOTE: A pending register (PR) bit is cleared
 		// by writing 1 to it.
 		//
-		EXTI->PR |= ((uint32_t)0x0002);
+		EXTI->PR |= EXTI_PR_PR1;
 	}
 }
 
@@ -351,7 +366,7 @@ void EXTI0_1_IRQHandler()
 /* This handler is declared in system/src/cmsis/vectors_stm32f051x8.c */
 void EXTI2_3_IRQHandler()
 {
-	// measure_frequency();
+	// EXTI->PR |= EXTI_PR_PR2;
 }
 
 /*****************************************************************/
