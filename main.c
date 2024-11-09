@@ -54,8 +54,9 @@
 /* TEST PRINTS (FOR DEBUGGING PURPOSES) */
 #define MAIN_DEBUG 1
 #define ADC_DEBUG 0
-#define FREQ_DEBUG 1
-#define ENABLE_CAL 1
+#define FREQ_DEBUG 0
+#define ENABLE_CAL 1	// allow calibration
+#define OUT_DEBUG 1
 
 /*****************************************************************/
 /**                            TYPEDEFS                         **/
@@ -69,42 +70,19 @@
  * for example the linux kernel
  */
 
-/************************** ADC TYPEDEFS **************************/
-
-typedef struct ADC_Typedef ADC_Typedef; 		// forward declaration
-
-typedef struct ADC_Data_Typedef
-{
-	uint32_t reading;
-	uint32_t resistance;
-} ADC_Data_Typedef;
-
-typedef struct ADC_Typedef{
-	ADC_Data_Typedef data; 						// Variable Members
-	void (*read)(volatile ADC_Typedef*); 		// Function Members
-} ADC_Typedef;
-
-/************************** DAC TYPEDEFS **************************/
-
-//typedef struct DAC_Typedef DAC_Typedef; 		// forward declaration
-
-/************************** PWM TYPEDEFS **************************/
-
-//typedef struct PWM_Typedef PWM_Typedef; 		// forward declaration
-
-/************************** LCD TYPEDEFS **************************/
-
-//typedef struct LCD_Typedef LCD_Typedef; 		// forward declaration
 
 /*****************************************************************/
 /**                    FUNCTION PROTOTYPES                      **/
 /*****************************************************************/
 
+/********************** Under-the-hood functions ********************/
 void myGPIOA_Init(void);
 void myTIM2_Init(void);
 void EXTI_Init(void);
 
-void button_push();
+void toggle_mode(void);
+void button_push(void);
+void measure_frequency(unsigned int bit_number, unsigned int* var_address);
 
 /************************** ADC Prototypes **************************/
 void calibrate_ADC(void);
@@ -147,9 +125,14 @@ void SystemClock48MHz( void )
 /**                       Global Variables                      **/
 /*****************************************************************/
 
-volatile ADC_Typedef pot;  //potentiometer
+volatile int mode = 0;	   // 0 = NEC555 frequency; 1 = Function generator frequency
 volatile uint32_t adc_value;
+
+// Measured values
 volatile uint32_t resistance;
+unsigned int ne555_frequency;
+unsigned int fgen_frequency;
+
 
 /*****************************************************************/
 /**                              MAIN                           **/
@@ -173,11 +156,11 @@ int main(int argc, char* argv[])
 	myADC_Init();				// Initialize ADC
 	myDAC_init();				// Initialize DAC
 
+
 	while (1) {
-		adc_value = readADC();
-		resistance = toOhms(adc_value);
+		adc_value = readADC();				// Read from the potentiometer
+		resistance = toOhms(adc_value);		// Convert the ADC value to resistance
 		writeDAC(adc_value);
-		// trace_printf("Resistance: %u\n", resistance);
 	}
 	return 0;
 
@@ -293,28 +276,53 @@ void TIM2_IRQHandler()
 	}
 }
 
+/* Toggles between the mode for NE555 and the function generator */
+void toggle_mode() {
+	// Simply flip the boolean
+	mode = !mode;
+
+	if (OUT_DEBUG) {
+		if (!mode) {
+			trace_printf("<<<< NEC555 TIMER >>>>\n");
+			trace_printf("Resistance: %u\n", resistance);
+			trace_printf("Frequency: %u\n\n", ne555_frequency);
+		}
+		else {
+			trace_printf("<<<< FUNCTION GENERATOR >>>>\n");
+			trace_printf("Frequency: %u\n", fgen_frequency);
+			trace_printf("\n");
+		}
+	}
+}
+
 void button_push() {
 	if ((EXTI->PR & EXTI_PR_PR0) != 0){
 
 		if((GPIOA->IDR & GPIO_IDR_0) != 0){
 			// Wait for button to be released (PA0 = 0)
 			while((GPIOA->IDR & GPIO_IDR_0) != 0) {}
-			trace_printf("<<<<<<<<<<<<<<< Button detected >>>>>>>>>>>>>>>\n");
+
+			// Trigger a function or a block of code here *************
+			toggle_mode();
+			// ********************************************************
 		}
 		EXTI->PR |= EXTI_PR_PR0;
 	}
 	// EXTI->PR |= EXTI_PR_PR1;
 }
 
-void measure_frequency() {
+/* Measures the frequency and stores the value */
+void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
 
 	// Declare/initialize your local variables here...
     unsigned int count = 0;
     float period = 0;
     float frequency = 0;
 
+    uint32_t register_mask = EXTI_PR_PR0 << bit_number;
+
 	/* Check if EXTI2 interrupt pending flag is indeed set */
-	if ((EXTI->PR & EXTI_PR_PR1) != 0)
+	if ((EXTI->PR & register_mask) != 0)
 	{
 		//
 		// 1. If this is the first edge:
@@ -337,36 +345,58 @@ void measure_frequency() {
 		else{
             TIM2->CR1 &= ~(TIM_CR1_CEN);
             count = TIM2->CNT;
-            period = (float)count/(float)SystemCoreClock;
-            frequency = 1/period;
-            // Bring this block of code to somewhere else
+            period = (float)count / (float)SystemCoreClock;
+            frequency = 1 / period;
+
+//            trace_printf("Resistance: %u\n", resistance);
+            *var_address = (unsigned int)(frequency);
+
+            // Check if the frequency value is saved
             if (FREQ_DEBUG) {
-            	trace_printf("Count: %u\n", count);
-            	trace_printf("Period: %u\n", (unsigned int)(period*1000000));
-            	trace_printf("Frequency: %u\n", (unsigned int)frequency);
+            	if (bit_number == 1) {
+            		trace_printf("Frequency: %u\n", ne555_frequency);
+            	}
+            	else if (bit_number == 2) {
+            		trace_printf("Frequency: %u\n", fgen_frequency);
+            	}
             }
-            // ****************************************
 		}
 
 		// 2. Clear EXTI2 interrupt pending flag (EXTI->PR).
 		// NOTE: A pending register (PR) bit is cleared
 		// by writing 1 to it.
 		//
-		EXTI->PR |= EXTI_PR_PR1;
+		EXTI->PR |= register_mask;	// Clear interrupt flag for the given bit number
 	}
 }
 
 void EXTI0_1_IRQHandler()
 {
+	// processes the button push
 	button_push();
-	measure_frequency();
+
+	if (!mode) {	// If in 555 timer mode
+		// Measure frequency from PA1 (555 timer)
+		measure_frequency(1, &ne555_frequency);
+	}
+	/*
+	 * // Clear interrupt flag for EXTI1, clears the interrupt flag for PA1 (555 timer),
+	 * ensuring that the interrupt doesn't immediately re-trigger. This is to isolate
+	 * the triggers coming from both the 555 timer and the func. gen from each other.
+	 * This ensures accurate and persistent measurement for two separate devices.
+	 * */
+	EXTI->PR |= EXTI_PR_PR1;
 }
 
 
 /* This handler is declared in system/src/cmsis/vectors_stm32f051x8.c */
 void EXTI2_3_IRQHandler()
 {
-	// EXTI->PR |= EXTI_PR_PR2;
+	if (mode) {		// If in Function generator mode
+		// Measure frequency from PA1 (555 timer)
+		measure_frequency(2, &fgen_frequency);
+	}
+	EXTI->PR |= EXTI_PR_PR2;	// Clear interrupt flag for EXTI2
 }
 
 /*****************************************************************/
