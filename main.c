@@ -80,7 +80,7 @@
 void myGPIOA_Init(void);
 void myTIM2_Init(void);
 void myTIM3_Init(void);
-void TIM3_delay(uint16_t milliseconds);
+void TIM3_delay(uint8_t milliseconds);
 void EXTI_Init(void);
 
 void toggle_mode(void);
@@ -344,7 +344,7 @@ void TIM3_IRQHandler()
 //
 // This function uses TIM3 to make the system wait for the couple of milliseconds
 //
-void TIM3_delay(uint16_t milliseconds) {
+void TIM3_delay(uint8_t milliseconds) {
 
 	// Reset the timer
 	TIM3->CNT = 0;
