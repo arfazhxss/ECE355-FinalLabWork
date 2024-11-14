@@ -69,9 +69,12 @@ void oled_Write_Cmd(unsigned char);
 void oled_Write_Data(unsigned char);
 
 void oled_config(void);
+void set_Page(uint8_t page);
+void set_Segment(uint8_t seg);
 
 void refresh_OLED(void);
-
+void myTIM3_Init();
+void TIM3_delay(uint8_t milliseconds);
 
 SPI_HandleTypeDef SPI_Handle;
 
@@ -240,6 +243,10 @@ unsigned char Characters[][8] = {
     {0b00001000, 0b00011100, 0b00101010, 0b00001000, 0b00001000,0b00000000, 0b00000000, 0b00000000}   // <-
 };
 
+// Constants
+#define myTIM3_PRESCALER ((uint16_t)47999)
+#define myTIMx_PERIOD (0xFFFFFFFF)
+#define STARTING_COL 1
 
 void SystemClock48MHz( void )
 {
@@ -290,9 +297,6 @@ main(int argc, char* argv[])
 
 	while (1)
 	{
-
-        ...
-
 		refresh_OLED();
 	}
 }
@@ -330,7 +334,9 @@ void myGPIOB_Init() {
 void mySPI_Init(void) {
 
 
-	// Pulled out from the lecture slides in page 26
+	// Enable the SPI1 clock
+	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+
 	SPI_Handle.Instance = SPI1;
 
 	SPI_Handle.Init.Direction = SPI_DIRECTION_1LINE;
@@ -343,10 +349,74 @@ void mySPI_Init(void) {
 	SPI_Handle.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	SPI_Handle.Init.CRCPolynomial = 7;
 
-	HAL_SPI_Init(&SPI_Handle);		/* initialize SPI1 (CMSIS) */
-	__HAL_SPI_ENABLE(&SPI_Handle); 	/* enable SPI1 (CMSIS) */
+	// Initialize the SPI interface
+	HAL_SPI_Init( &SPI_Handle );
+
+	// Enable the SPI
+	__HAL_SPI_ENABLE( &SPI_Handle );
+
 }
 
+// Initialize TIM3
+void myTIM3_Init()
+{
+	/* Enable clock for TIM2 peripheral */
+	// Relevant register: RCC->APB1ENR
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	/* Configure TIM2: buffer auto-reload, count up, stop on overflow,
+	 * enable update events, interrupt on overflow only */
+	// Relevant register: TIM2->CR1
+	TIM3->CR1 = ((uint16_t)0x008C);
+	/* Set clock prescaler value */
+	TIM3->PSC = myTIM3_PRESCALER;
+	/* Set auto-reloaded delay */
+	TIM3->ARR = myTIMx_PERIOD;
+	/* Update timer registers */
+	// Relevant register: TIM2->EGR
+	TIM3->EGR |= ((uint16_t)0x0001);
+	/* Assign TIM2 interrupt priority = 0 in NVIC */
+	// Relevant register: NVIC->IP[3], or use NVIC_SetPriority
+	NVIC_SetPriority(TIM3_IRQn, 1);
+	/* Enable TIM2 interrupts in NVIC */
+	// Relevant register: NVIC->ISER[0], or use NVIC_EnableIRQ
+	NVIC_EnableIRQ(TIM3_IRQn);
+	/* Enable update interrupt generation */
+	// Relevant register: TIM2->DIER
+	TIM3->DIER |= TIM_DIER_UIE;
+
+	// Start the timer in TIM3
+	if((TIM3->CR1 & TIM_CR1_CEN) == 0){
+		TIM3->CNT = 0;
+		TIM3->CR1 |= TIM_CR1_CEN;
+	}
+}
+
+void TIM3_IRQHandler()
+{
+	/* Check if update interrupt flag is indeed set */
+	if ((TIM3->SR & TIM_SR_UIF) != 0)
+	{
+		trace_printf("\n*** Overflow in TIM3! ***\n");
+
+		TIM3->SR &= ~TIM_SR_UIF;		// Clear update interrupt flag
+		TIM3->CR1 |= TIM_CR1_CEN;		// Restart stopped timer
+	}
+}
+
+// Delay for about a couple of milliseconds
+void TIM3_delay(uint8_t milliseconds) {
+
+	// Reset the timer
+	TIM3->CNT = 0;
+
+	// Start the timer in TIM3, if not running
+	if((TIM3->CR1 & TIM_CR1_CEN) == 0){
+		TIM3->CR1 |= TIM_CR1_CEN;
+	}
+
+	while (TIM3->CNT < milliseconds);
+	TIM3->CNT = 0;
+}
 
 //
 // LED Display Functions
@@ -357,52 +427,72 @@ void refresh_OLED( void )
 {
     // Buffer size = at most 16 characters per PAGE + terminating '\0'
     unsigned char Buffer[17];
+    uint8_t segment = STARTING_COL * 8;		// STARTING COL -> 1 COL has 8 segments
 
-    snprintf( Buffer, sizeof( Buffer ), "R: %5u Ohms", Res );
+    snprintf(Buffer, sizeof(Buffer), "R: %5u Ohms", Res);
+	/* Buffer now contains your character ASCII codes for LED Display
+	   - select PAGE (LED Display line) and set starting SEG (column)
+	   - for each c = ASCII code = Buffer[0], Buffer[1], ...,
+		   send 8 bytes in Characters[c][0-7] to LED Display
+	*/
+	set_Page(2);	// Set the page number to 2
+	for (uint8_t char_index = 0; char_index < strlen(Buffer); char_index++) {
+
+		// Grab the ASCII code from the buffer
+		uint8_t ascii_code = (uint8_t)(Buffer[char_index]);
+
+		for (uint8_t byte_index = 0; byte_index < 8; byte_index++) {
+			set_Segment(segment);
+			oled_Write_Data(Characters[ascii_code][byte_index]);
+			segment++;
+		}
+	}
+
+	TIM3->CNT = 0;
+
+
+//    snprintf( Buffer, sizeof( Buffer ), "F: %5u Hz", Freq );
     /* Buffer now contains your character ASCII codes for LED Display
        - select PAGE (LED Display line) and set starting SEG (column)
        - for each c = ASCII code = Buffer[0], Buffer[1], ...,
            send 8 bytes in Characters[c][0-7] to LED Display
     */
-
-    ...
-
-
-    snprintf( Buffer, sizeof( Buffer ), "F: %5u Hz", Freq );
-    /* Buffer now contains your character ASCII codes for LED Display
-       - select PAGE (LED Display line) and set starting SEG (column)
-       - for each c = ASCII code = Buffer[0], Buffer[1], ...,
-           send 8 bytes in Characters[c][0-7] to LED Display
-    */
-
-    ...
 
 
 	/* Wait for ~100 ms (for example) to get ~10 frames/sec refresh rate
        - You should use TIM3 to implement this delay (e.g., via polling)
     */
 
-    ...
-
 }
 
 
+// Sets a page (row) for the data to be written
+void set_Page(uint8_t page) {
+	oled_Write_Cmd(0xB0 | (page & 0x7));	// Select PAGE
+}
+
+// Selects a segment (column) for the data to be written
+void set_Segment(uint8_t seg) {
+	oled_Write_Cmd(0x00 | (seg & 0xF));			// Take the lower half of the SEG
+	oled_Write_Cmd(0x10 | ((seg >> 4) & 0xF));	// Take the upper half of the SEG
+}
+
 void oled_Write_Cmd( unsigned char cmd )
 {
-    ... // make PB6 = CS# = 1
-    ... // make PB7 = D/C# = 0
-    ... // make PB6 = CS# = 0
+    GPIOB->ODR |= GPIO_ODR_6;		// make PB6 = CS# = 1
+    GPIOB->ODR &= ~(GPIO_ODR_7);	// make PB7 = D/C# = 0 	<== That's where the difference is
+    GPIOB->ODR &= ~(GPIO_ODR_6); 	// make PB6 = CS# = 0
     oled_Write( cmd );
-    ... // make PB6 = CS# = 1
+    GPIOB->ODR |= GPIO_ODR_6;	 	// make PB6 = CS# = 1
 }
 
 void oled_Write_Data( unsigned char data )
 {
-    ... // make PB6 = CS# = 1
-    ... // make PB7 = D/C# = 1
-    ... // make PB6 = CS# = 0
+	GPIOB->ODR |= GPIO_ODR_6; 		// make PB6 = CS# = 1
+	GPIOB->ODR |= GPIO_ODR_7;		// make PB7 = D/C# = 1  <== That's where the difference is
+	GPIOB->ODR &= ~(GPIO_ODR_6);	// make PB6 = CS# = 0
     oled_Write( data );
-    ... // make PB6 = CS# = 1
+    GPIOB->ODR |= GPIO_ODR_6;		// make PB6 = CS# = 1
 }
 
 
@@ -410,8 +500,7 @@ void oled_Write( unsigned char Value )
 {
 
     /* Wait until SPI1 is ready for writing (TXE = 1 in SPI1_SR) */
-
-    ...
+	while ((SPI1->SR & SPI_SR_TXE) == 0);
 
     /* Send one 8-bit character:
        - This function also sets BIDIOE = 1 in SPI1_CR1
@@ -420,9 +509,7 @@ void oled_Write( unsigned char Value )
 
 
     /* Wait until transmission is complete (TXE = 1 in SPI1_SR) */
-
-    ...
-
+    while ((SPI1->SR & SPI_SR_TXE) == 0);
 }
 
 
@@ -431,37 +518,20 @@ void oled_config( void )
 	// Initialize GPIOB pins
 	myGPIOB_Init();
 
-	// Enable the SPI1 clock
-	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+	// Initialize SPI
+	mySPI_Init();
 
-    SPI_Handle.Instance = SPI1;
+	// Initialize TIM3
+	myTIM3_Init();
 
-    SPI_Handle.Init.Direction = SPI_DIRECTION_1LINE;
-    SPI_Handle.Init.Mode = SPI_MODE_MASTER;
-    SPI_Handle.Init.DataSize = SPI_DATASIZE_8BIT;
-    SPI_Handle.Init.CLKPolarity = SPI_POLARITY_LOW;
-    SPI_Handle.Init.CLKPhase = SPI_PHASE_1EDGE;
-    SPI_Handle.Init.NSS = SPI_NSS_SOFT;
-    SPI_Handle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
-    SPI_Handle.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    SPI_Handle.Init.CRCPolynomial = 7;
+    // Set PB4 to low (0) to initiate the reset	// TEMPORARY
+	GPIOB->BSRR = GPIO_BSRR_BR_4;	// Clear bit 4
+//    GPIOB->ODR &= ~(GPIO_ODR_4);   	// Clear bit 4 (PB4 = 0)
+    TIM3_delay(10);                   	// Wait for 10 milliseconds
 
-//
-// Initialize the SPI interface
-//
-    HAL_SPI_Init( &SPI_Handle );
-
-//
-// Enable the SPI
-//
-    __HAL_SPI_ENABLE( &SPI_Handle );
-
-
-    // Set PB4 to low (0) to initiate the reset
-    GPIOB->ODR &= ~(GPIO_ODR_4);   	// Clear bit 4 (PB4 = 0)
-    delay_ms(5);                   	// Wait for 5 milliseconds
-    GPIOB->ODR |= GPIO_ODR_4;   	// Set bit 4 back to 1
-    delay_ms(5);					// Wait for 5 milliseconds
+    GPIOB->BSRR = GPIO_BSRR_BS_4;		// Set bit 4 back to HIGH
+//    GPIOB->ODR |= GPIO_ODR_4;   	// Set bit 4 back to 1
+    TIM3_delay(10);					// Wait for 10 milliseconds
 
 
 //
@@ -478,8 +548,15 @@ void oled_config( void )
            set starting SEG = 0
            call oled_Write_Data( 0x00 ) 128 times
     */
+    for (uint8_t page = 0; page < 8; page++) {
+    	set_Page(page);		// Set the page / row
 
-    ...
+    	// set starting SEG = 0, and call oled_Write_Data( 0x00 ) 128 times
+    	for (uint8_t seg = 0; seg < 128; seg++) {
+    		set_Segment(seg);
+    		oled_Write_Data(0x00);
+    	}
+    }
 
 
 }
