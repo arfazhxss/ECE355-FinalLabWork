@@ -60,8 +60,8 @@
 void myGPIOB_Init(void);
 void mySPI_Init(void);
 
-unsigned int Freq = 0;  // Example: measured frequency value (global variable)
-unsigned int Res = 0;   // Example: measured resistance value (global variable)
+unsigned int Freq = 2500;  // Example: measured frequency value (global variable)
+unsigned int Res = 3250;   // Example: measured resistance value (global variable)
 
 
 void oled_Write(unsigned char);
@@ -77,7 +77,7 @@ void myTIM3_Init();
 void TIM3_delay(uint8_t milliseconds);
 
 SPI_HandleTypeDef SPI_Handle;
-
+int mode = 1;
 
 //
 // LED Display initialization commands
@@ -104,7 +104,6 @@ unsigned char oled_init_cmds[] =
     0xC0,
     0xA0
 };
-
 
 //
 // Character specifications for LED Display (1 row = 8 bytes = 1 ASCII character)
@@ -244,9 +243,10 @@ unsigned char Characters[][8] = {
 };
 
 // Constants
-#define myTIM3_PRESCALER ((uint16_t)47999)
+#define myTIM3_PRESCALER ((uint16_t)48000U)
 #define myTIMx_PERIOD (0xFFFFFFFF)
-#define STARTING_COL 1
+#define STARTING_COL (uint8_t)1U
+#define REFRESH_PERIOD ((uint16_t)500U)
 
 void SystemClock48MHz( void )
 {
@@ -350,7 +350,7 @@ void mySPI_Init(void) {
 	SPI_Handle.Init.CRCPolynomial = 7;
 
 	// Initialize the SPI interface
-	HAL_SPI_Init( &SPI_Handle );
+	HAL_SPI_Init(&SPI_Handle);
 
 	// Enable the SPI
 	__HAL_SPI_ENABLE( &SPI_Handle );
@@ -368,7 +368,7 @@ void myTIM3_Init()
 	// Relevant register: TIM2->CR1
 	TIM3->CR1 = ((uint16_t)0x008C);
 	/* Set clock prescaler value */
-	TIM3->PSC = myTIM3_PRESCALER;
+	TIM3->PSC = myTIM3_PRESCALER - 1;
 	/* Set auto-reloaded delay */
 	TIM3->ARR = myTIMx_PERIOD;
 	/* Update timer registers */
@@ -422,47 +422,60 @@ void TIM3_delay(uint8_t milliseconds) {
 // LED Display Functions
 //
 
+// Prints a string/buffer to the LED Screen
+// Params: buffer string, page, starting_column (each column occupies 8 segments to store a character)
+void oled_print(unsigned char buffer[17], uint8_t page, uint8_t starting_column) {
+	/* The buffer contains your character ASCII codes for LED Display */
+
+	// Initialize the ascii_code and the segment, starting from the 'starting_column'
+	uint8_t segment = starting_column * 8;
+	uint8_t ascii_code;
+
+	// - select PAGE (LED Display line)
+	set_Page(page);
+
+	// Iterate through each character from the buffer
+	for (uint8_t char_index = 0; char_index < strlen((const char *)buffer); char_index++) {
+
+		// Grab the ASCII code from the buffer
+		ascii_code = (uint8_t)(buffer[char_index]);
+
+		// Iterate through each byte from the Characters array
+		for (uint8_t byte_index = 0; byte_index < 8; byte_index++) {
+			set_Segment(segment++);									// Don't forget to set the segment
+			oled_Write_Data(Characters[ascii_code][byte_index]);	// Write the data to the SDDRAM memory of the OLED
+		}
+	}
+}
+
+
+/*
+		   - for each c = ASCII code = Buffer[0], Buffer[1], ...,
+			   send 8 bytes in Characters[c][0-7] to LED Display
+		*/
 
 void refresh_OLED( void )
 {
     // Buffer size = at most 16 characters per PAGE + terminating '\0'
     unsigned char Buffer[17];
-    uint8_t segment = STARTING_COL * 8;		// STARTING COL -> 1 COL has 8 segments
 
-    snprintf(Buffer, sizeof(Buffer), "R: %5u Ohms", Res);
-	/* Buffer now contains your character ASCII codes for LED Display
-	   - select PAGE (LED Display line) and set starting SEG (column)
-	   - for each c = ASCII code = Buffer[0], Buffer[1], ...,
-		   send 8 bytes in Characters[c][0-7] to LED Display
-	*/
-	set_Page(2);	// Set the page number to 2
-	for (uint8_t char_index = 0; char_index < strlen(Buffer); char_index++) {
+    if (TIM3->CNT >= REFRESH_PERIOD - 1) {
+    	// Update the buffer and then print it out
+		snprintf((char *)Buffer, sizeof(Buffer), "R: %6u Ohms", Res);
+		oled_print(Buffer, 2, STARTING_COL);
 
-		// Grab the ASCII code from the buffer
-		uint8_t ascii_code = (uint8_t)(Buffer[char_index]);
-
-		for (uint8_t byte_index = 0; byte_index < 8; byte_index++) {
-			set_Segment(segment);
-			oled_Write_Data(Characters[ascii_code][byte_index]);
-			segment++;
+		// Do it again, but this time, for the frequency
+		if (!mode) {
+			snprintf((char *)Buffer, sizeof(Buffer), "F1: %5u Hz", Freq);
 		}
-	}
+		else {
+			snprintf((char *)Buffer, sizeof(Buffer), "F2: %5u Hz", Freq);
+		}
 
-	TIM3->CNT = 0;
+		oled_print(Buffer, 4, STARTING_COL);
 
-
-//    snprintf( Buffer, sizeof( Buffer ), "F: %5u Hz", Freq );
-    /* Buffer now contains your character ASCII codes for LED Display
-       - select PAGE (LED Display line) and set starting SEG (column)
-       - for each c = ASCII code = Buffer[0], Buffer[1], ...,
-           send 8 bytes in Characters[c][0-7] to LED Display
-    */
-
-
-	/* Wait for ~100 ms (for example) to get ~10 frames/sec refresh rate
-       - You should use TIM3 to implement this delay (e.g., via polling)
-    */
-
+		TIM3->CNT = 0;
+    }
 }
 
 
@@ -505,7 +518,7 @@ void oled_Write( unsigned char Value )
     /* Send one 8-bit character:
        - This function also sets BIDIOE = 1 in SPI1_CR1
     */
-    HAL_SPI_Transmit( &SPI_Handle, &Value, 1, HAL_MAX_DELAY );
+	HAL_SPI_Transmit(&SPI_Handle, &Value, 1, HAL_MAX_DELAY);
 
 
     /* Wait until transmission is complete (TXE = 1 in SPI1_SR) */
