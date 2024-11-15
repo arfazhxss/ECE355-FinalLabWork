@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "diag/Trace.h"
 #include "cmsis/cmsis_device.h"
+#include "oled_screen.h"
 
 // ----------------------------------------------------------------------------
 //
@@ -48,16 +49,16 @@
 
 /* Clock prescaler for TIM2 timer: no prescaling */
 #define myTIM2_PRESCALER ((uint16_t)0x0000)
-#define myTIM3_PRESCALER ((uint16_t)47999)
 /* Maximum possible setting for overflow */
-#define myTIMx_PERIOD ((uint32_t)0xFFFFFFFF)
+#define myTIM2_PERIOD ((uint32_t)0xFFFFFFFF)
 
 /* TEST PRINTS (FOR DEBUGGING PURPOSES) */
 #define MAIN_DEBUG 1
 #define ADC_DEBUG 0
 #define FREQ_DEBUG 0
 #define ENABLE_CAL 1	// allow calibration
-#define TOGGLE_DEBUG 1
+#define TOGGLE_DEBUG 0
+#define OUTPUT_DEBUG 0
 
 /*****************************************************************/
 /**                            TYPEDEFS                         **/
@@ -79,8 +80,6 @@
 /********************** Under-the-hood functions ********************/
 void myGPIOA_Init(void);
 void myTIM2_Init(void);
-void myTIM3_Init(void);
-void TIM3_delay(uint8_t milliseconds);
 void EXTI_Init(void);
 
 void toggle_mode(void);
@@ -91,7 +90,7 @@ void measure_frequency(unsigned int bit_number, unsigned int* var_address);
 void calibrate_ADC(void);
 void myADC_Init(void);
 uint32_t readADC(void);
-uint32_t toOhms(uint32_t adc_val);
+unsigned int toOhms(uint32_t adc_val);
 
 /************************** DAC Prototypes **************************/
 void myDAC_init(void);
@@ -128,11 +127,11 @@ void SystemClock48MHz( void )
 /**                       Global Variables                      **/
 /*****************************************************************/
 
-volatile int mode = 0;	   // 0 = NEC555 frequency; 1 = Function generator frequency
+volatile int funcGen_mode = 0;	   // 0 = NEC555 frequency; 1 = Function generator frequency
 volatile uint32_t adc_value;
 
 // Measured values
-volatile uint32_t resistance;
+unsigned int resistance;
 unsigned int ne555_frequency;
 unsigned int fgen_frequency;
 
@@ -153,31 +152,27 @@ int main(int argc, char* argv[])
 
 	myGPIOA_Init();				// Initialize I/O port PA
 	myTIM2_Init();				// Initialize timer TIM2
-	myTIM3_Init();				// Initialize timer TIM3
 	EXTI_Init();				// Initialize EXTI
 
 
 	myADC_Init();				// Initialize ADC
 	myDAC_init();				// Initialize DAC
 
-	trace_printf("Delaying for 3 seconds...\n");
-	TIM3_delay(3000);
+	oled_config();
 
 	while (1) {
 		adc_value = readADC();				// Read from the potentiometer
 		resistance = toOhms(adc_value);		// Convert the ADC value to resistance and updates it regularly
 		writeDAC(adc_value);				// Writes the value
 
-		if (TIM3->CNT >= 100) {		// Trigger if the count value in TIM3 reaches 100 ms
-
-			if (!mode) {
-
-				trace_printf("Frequency: %u\n\n", ne555_frequency);
-			}
-			else {
-				trace_printf("Frequency: %u\n\n", fgen_frequency);
-			}
-			TIM3->CNT = 0;
+		// Display values to the LED screen
+		if (!funcGen_mode) {
+			// 1 - NE555 Timer
+			refresh_OLED(resistance, ne555_frequency, 1);
+		}
+		else {
+			// 2 - NE555 Timer
+			refresh_OLED(resistance, fgen_frequency, 2);
 		}
 	}
 
@@ -234,7 +229,7 @@ void myTIM2_Init()
 	/* Set clock prescaler value */
 	TIM2->PSC = myTIM2_PRESCALER;
 	/* Set auto-reloaded delay */
-	TIM2->ARR = myTIMx_PERIOD;
+	TIM2->ARR = myTIM2_PERIOD;
 	/* Update timer registers */
 	// Relevant register: TIM2->EGR
 	TIM2->EGR |= ((uint16_t)0x0001);
@@ -247,39 +242,6 @@ void myTIM2_Init()
 	/* Enable update interrupt generation */
 	// Relevant register: TIM2->DIER
 	TIM2->DIER |= TIM_DIER_UIE;
-}
-
-void myTIM3_Init()
-{
-	/* Enable clock for TIM2 peripheral */
-	// Relevant register: RCC->APB1ENR
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-	/* Configure TIM2: buffer auto-reload, count up, stop on overflow,
-	 * enable update events, interrupt on overflow only */
-	// Relevant register: TIM2->CR1
-	TIM3->CR1 = ((uint16_t)0x008C);
-	/* Set clock prescaler value */
-	TIM3->PSC = myTIM3_PRESCALER;
-	/* Set auto-reloaded delay */
-	TIM3->ARR = myTIMx_PERIOD;
-	/* Update timer registers */
-	// Relevant register: TIM2->EGR
-	TIM3->EGR |= ((uint16_t)0x0001);
-	/* Assign TIM2 interrupt priority = 0 in NVIC */
-	// Relevant register: NVIC->IP[3], or use NVIC_SetPriority
-	NVIC_SetPriority(TIM3_IRQn, 1);
-	/* Enable TIM2 interrupts in NVIC */
-	// Relevant register: NVIC->ISER[0], or use NVIC_EnableIRQ
-	NVIC_EnableIRQ(TIM3_IRQn);
-	/* Enable update interrupt generation */
-	// Relevant register: TIM2->DIER
-	TIM3->DIER |= TIM_DIER_UIE;
-
-	// Start the timer in TIM3
-	if((TIM3->CR1 & TIM_CR1_CEN) == 0){
-		TIM3->CNT = 0;
-		TIM3->CR1 |= TIM_CR1_CEN;
-	}
 }
 
 void EXTI_Init() {
@@ -328,43 +290,14 @@ void TIM2_IRQHandler()
 	}
 }
 
-/* This handler is declared in system/src/cmsis/vectors_stm32f051x8.c */
-void TIM3_IRQHandler()
-{
-	/* Check if update interrupt flag is indeed set */
-	if ((TIM3->SR & TIM_SR_UIF) != 0)
-	{
-		trace_printf("\n*** Overflow in TIM3! ***\n");
-
-		TIM3->SR &= ~TIM_SR_UIF;		// Clear update interrupt flag
-		TIM3->CR1 |= TIM_CR1_CEN;		// Restart stopped timer
-	}
-}
-
-//
-// This function uses TIM3 to make the system wait for the couple of milliseconds
-//
-void TIM3_delay(uint8_t milliseconds) {
-
-	// Reset the timer
-	TIM3->CNT = 0;
-
-	// Start the timer in TIM3, if not running
-	if((TIM3->CR1 & TIM_CR1_CEN) == 0){
-		TIM3->CR1 |= TIM_CR1_CEN;
-	}
-
-	while (TIM3->CNT < milliseconds);
-	TIM3->CNT = 0;
-}
 
 /* Toggles between the mode for NE555 and the function generator */
 void toggle_mode() {
 	// Simply flip the boolean
-	mode = !mode;
+	funcGen_mode = !funcGen_mode;
 
 	// Disable one of the interrupts
-	if (!mode) {	// If using 555 timer
+	if (!funcGen_mode) {	// If using 555 timer
 		EXTI->IMR &= ~(EXTI_IMR_IM2);
 		EXTI->IMR |= EXTI_IMR_IM1;
 	}
@@ -373,21 +306,26 @@ void toggle_mode() {
 		EXTI->IMR |= EXTI_IMR_IM2;
 	}
 
+	// Prints out to the console
 	if (TOGGLE_DEBUG) {
-		if (!mode) {
+		if (!funcGen_mode) {
 			trace_printf("<<<< NEC555 TIMER >>>>\n");
-			trace_printf("Resistance: %u\n", resistance);
-			// MOVE to main() function
-//			trace_printf("Resistance: %u\n", resistance);
-//			trace_printf("Frequency: %u\n\n", ne555_frequency);
 		}
 		else {
 			trace_printf("<<<< FUNCTION GENERATOR >>>>\n");
-			// MOVE to main() function
-//			trace_printf("Frequency: %u\n", fgen_frequency);
-//			trace_printf("\n");
 		}
 	}
+
+	if (OUTPUT_DEBUG) {
+		if (!funcGen_mode) {
+			trace_printf("Resistance: %u\n", resistance);
+			trace_printf("Frequency 1: %u\n\n", ne555_frequency);
+		}
+		else {
+			trace_printf("Frequency 2: %u\n\n", fgen_frequency);
+		}
+	}
+
 }
 
 void button_push() {
@@ -444,7 +382,7 @@ void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
             frequency = 1 / period;
 
 //            trace_printf("Resistance: %u\n", resistance);
-            *var_address = (unsigned int)(frequency);
+            *var_address = (unsigned int)(frequency + 1);
 
             // Check if the frequency value is saved
             if (FREQ_DEBUG) {
@@ -471,7 +409,7 @@ void EXTI0_1_IRQHandler()
 	// processes the button push
 	button_push();
 
-	if (!mode) {	// If in 555 timer mode
+	if (!funcGen_mode) {	// If in 555 timer mode
 		// Measure frequency from PA1 (555 timer)
 		measure_frequency(1, &ne555_frequency);
 	}
@@ -481,7 +419,7 @@ void EXTI0_1_IRQHandler()
 /* This handler is declared in system/src/cmsis/vectors_stm32f051x8.c */
 void EXTI2_3_IRQHandler()
 {
-	if (mode) {		// If in Function generator mode
+	if (funcGen_mode) {		// If in Function generator mode
 		// Measure frequency from PA1 (555 timer)
 		measure_frequency(2, &fgen_frequency);
 	}
@@ -532,12 +470,12 @@ void myADC_Init() {
 }
 
 // convert ADC reading to resistance
-uint32_t toOhms(uint32_t adc_val)
+unsigned int toOhms(uint32_t adc_val)
 {
 	// Rescaled the ADC Value to the resistance of the potentiometer
 	// 4096 is the maximum 12-bit value from the ADC
 	// Maximum resistance of the potentiometer = 5000 Ω
-	return (uint32_t) (((float) adc_val/4095.0) * 5000.0);
+	return (unsigned int) (((float) adc_val/4095.0) * 5000.0);
 }
 
 /* Converts and reads the ADC value */
