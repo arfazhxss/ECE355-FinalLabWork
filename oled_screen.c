@@ -3,76 +3,8 @@
 // Copyright (c) 2014 Liviu Ionescu.
 //
 
-// ----------------------------------------------------------------------------
+#include "oled_screen.h"
 
-#include <stdio.h>
-#include "diag/Trace.h"
-#include <string.h>
-
-#include "cmsis/cmsis_device.h"
-
-// ----------------------------------------------------------------------------
-//
-// STM32F0 led blink sample (trace via $(trace)).
-//
-// In debug configurations, demonstrate how to print a greeting message
-// on the trace device. In release configurations the message is
-// simply discarded.
-//
-// To demonstrate POSIX retargetting, reroute the STDOUT and STDERR to the
-// trace device and display messages on both of them.
-//
-// Then demonstrates how to blink a led with 1Hz, using a
-// continuous loop and SysTick delays.
-//
-// On DEBUG, the uptime in seconds is also displayed on the trace device.
-//
-// Trace support is enabled by adding the TRACE macro definition.
-// By default the trace messages are forwarded to the $(trace) output,
-// but can be rerouted to any device or completely suppressed, by
-// changing the definitions required in system/src/diag/trace_impl.c
-// (currently OS_USE_TRACE_ITM, OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
-//
-// The external clock frequency is specified as a preprocessor definition
-// passed to the compiler via a command line option (see the 'C/C++ General' ->
-// 'Paths and Symbols' -> the 'Symbols' tab, if you want to change it).
-// The value selected during project creation was HSE_VALUE=48000000.
-//
-/// Note: The default clock settings take the user defined HSE_VALUE and try
-// to reach the maximum possible system clock. For the default 8MHz input
-// the result is guaranteed, but for other values it might not be possible,
-// so please adjust the PLL settings in system/src/cmsis/system_stm32f0xx.c
-//
-
-
-// ----- main() ---------------------------------------------------------------
-
-// Sample pragmas to cope with warnings. Please note the related line at
-// the end of this function, used to pop the compiler diagnostics status.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-declarations"
-#pragma GCC diagnostic ignored "-Wreturn-type"
-
-
-/*** This is partial code for accessing LED Display via SPI interface. ***/
-
-void myGPIOB_Init(void);
-void mySPI_Init(void);
-
-
-void oled_Write(unsigned char);
-void oled_Write_Cmd(unsigned char);
-void oled_Write_Data(unsigned char);
-
-void oled_config(void);
-void set_Page(uint8_t page);
-void set_Segment(uint8_t seg);
-
-void refresh_OLED( unsigned int res, unsigned int freq, uint8_t freq_number );
-void refresh_OLED_test(void);
-void myTIM3_Init();
-void TIM3_delay(uint8_t milliseconds);
 
 SPI_HandleTypeDef SPI_Handle;
 
@@ -239,65 +171,6 @@ static unsigned char Characters[][8] = {
     {0b00001000, 0b00011100, 0b00101010, 0b00001000, 0b00001000,0b00000000, 0b00000000, 0b00000000}   // <-
 };
 
-// Constants
-#define myTIM3_PRESCALER ((uint16_t)48000U)
-#define myTIMx_PERIOD (0xFFFFFFFF)
-#define STARTING_COL (uint8_t)1U
-#define REFRESH_PERIOD ((uint16_t)500U)
-
-void SystemClock48MHz( void )
-{
-//
-// Disable the PLL
-//
-    RCC->CR &= ~(RCC_CR_PLLON);
-//
-// Wait for the PLL to unlock
-//
-    while (( RCC->CR & RCC_CR_PLLRDY ) != 0 );
-//
-// Configure the PLL for a 48MHz system clock
-//
-    RCC->CFGR = 0x00280000;
-
-//
-// Enable the PLL
-//
-    RCC->CR |= RCC_CR_PLLON;
-
-//
-// Wait for the PLL to lock
-//
-    while (( RCC->CR & RCC_CR_PLLRDY ) != RCC_CR_PLLRDY );
-
-//
-// Switch the processor to the PLL clock source
-//
-    RCC->CFGR = ( RCC->CFGR & (~RCC_CFGR_SW_Msk)) | RCC_CFGR_SW_PLL;
-
-//
-// Update the system with the new clock frequency
-//
-    SystemCoreClockUpdate();
-
-}
-
-
-
-int
-main(int argc, char* argv[])
-{
-
-	SystemClock48MHz();
-
-	oled_config();
-
-	while (1)
-	{
-		refresh_OLED(2000, 200, 5);
-	}
-}
-
 
 // Initialize GPIOB pins
 void myGPIOB_Init() {
@@ -401,7 +274,8 @@ void TIM3_IRQHandler()
 }
 
 // Delay for about a couple of milliseconds
-void TIM3_delay(uint8_t milliseconds) {
+void TIM3_delay(uint8_t milliseconds)
+{
 
 	// Reset the timer
 	TIM3->CNT = 0;
@@ -422,7 +296,8 @@ void TIM3_delay(uint8_t milliseconds) {
 
 // Prints a string/buffer to the LED Screen
 // Params: buffer string, page, starting_column (each column occupies 8 segments to store a character)
-void oled_print(unsigned char buffer[17], uint8_t page, uint8_t starting_column) {
+void oled_print(unsigned char buffer[17], uint8_t page, uint8_t starting_column)
+{
 	/* The buffer contains your character ASCII codes for LED Display */
 
 	// Initialize the ascii_code and the segment, starting from the 'starting_column'
@@ -450,7 +325,6 @@ void oled_print(unsigned char buffer[17], uint8_t page, uint8_t starting_column)
 		}
 	}
 }
-
 
 
 // PARAMS: Resistance, frequency, and the frequency number
@@ -558,7 +432,7 @@ void oled_config( void )
 	// Initialize TIM3
 	myTIM3_Init();
 
-    // Set PB4 to low (0) to initiate the reset	// TEMPORARY
+    // Set PB4 to low (0) to initiate the reset
 	GPIOB->BSRR = GPIO_BSRR_BR_4;	// Clear bit 4
 //    GPIOB->ODR &= ~(GPIO_ODR_4);   	// Clear bit 4 (PB4 = 0)
     TIM3_delay(10);                   	// Wait for 10 milliseconds
