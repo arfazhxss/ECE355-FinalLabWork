@@ -341,7 +341,7 @@ void refresh_OLED( unsigned int res, unsigned int freq, uint8_t freq_number )
 		oled_print(Buffer, 2, STARTING_COL);
 
 		// Do it again, but this time, for the frequency
-		snprintf((char *)Buffer, sizeof(Buffer), "F%u: %5u Hz", freq_number, freq);
+		snprintf((char *)Buffer, sizeof(Buffer), "F%u: %5u Hz  ", freq_number, freq);
 		oled_print(Buffer, 4, STARTING_COL);
 
 		TIM3->CNT = 0;
