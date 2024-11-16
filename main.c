@@ -49,7 +49,7 @@
 
 /* Clock prescaler for TIM2 timer: no prescaling */
 #define myTIM2_PRESCALER ((uint16_t)0x0000)
-/* Maximum possible setting for overflow */
+/* Maximum possible setting for overflow */ // Free running timer
 #define myTIM2_PERIOD ((uint32_t)0xFFFFFFFF)
 
 /* TEST PRINTS (FOR DEBUGGING PURPOSES) */
@@ -331,6 +331,7 @@ void toggle_mode() {
 }
 
 void button_push() {
+	// There is some change in the voltage value
 	if ((EXTI->PR & EXTI_PR_PR0) != 0){
 
 		if((GPIOA->IDR & GPIO_IDR_0) != 0){
@@ -341,9 +342,9 @@ void button_push() {
 			toggle_mode();
 			// ********************************************************
 		}
+		// Clear pending interrupt flag
 		EXTI->PR |= EXTI_PR_PR0;
 	}
-	// EXTI->PR |= EXTI_PR_PR1;
 }
 
 /* Measures the frequency and stores the value */
@@ -373,6 +374,8 @@ void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
 		//	  "unsigned int" type to print your signal
 		//	  period and frequency.
 		//
+
+		// Start the TIM2 timer
 		if((TIM2->CR1 & TIM_CR1_CEN) == 0){
 			TIM2->CNT = 0;
 			TIM2->CR1 |= TIM_CR1_CEN;
@@ -384,7 +387,7 @@ void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
             frequency = 1 / period;
 
 //            trace_printf("Resistance: %u\n", resistance);
-            *var_address = (unsigned int)(frequency + 1);
+            *var_address = (unsigned int)(frequency);
 
             // Check if the frequency value is saved
             if (FREQ_DEBUG) {
@@ -466,7 +469,7 @@ void myADC_Init() {
 	}
 
 	/// Set ADC to continuous conversion mode and overwrite old data on overrun
-	ADC1->CFGR1 |= (ADC_CFGR1_CONT | ADC_CFGR1_OVRMOD); // (TEMPORARY)
+	ADC1->CFGR1 |= (ADC_CFGR1_CONT | ADC_CFGR1_OVRMOD);
 }
 
 // convert ADC reading to resistance
