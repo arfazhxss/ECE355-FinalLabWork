@@ -204,8 +204,10 @@ void myGPIOA_Init()
 
 
 	// Set GPIO PA5 and PA4 to Analog Mode, (Or I can use 0x3 << 10) // 11 - Analog
-	GPIOA->MODER |= 0xC00;	// Set GPIO Pin A to Analog Mode, (Or I can use 0x3 << 10)
-	GPIOA->MODER |= 0x300;	// (or 0x3 << 8)
+	GPIOA->MODER |= GPIO_MODER_MODER4;
+	GPIOA->MODER |= GPIO_MODER_MODER5;
+//	GPIOA->MODER |= 0xC00;	// Set GPIO Pin A to Analog Mode, (Or I can use 0x3 << 10)
+//	GPIOA->MODER |= 0x300;	// (or 0x3 << 8)
 
 
 	/*Ensure no pull-up/pull-down for PA0*/
@@ -446,7 +448,7 @@ void myADC_Init() {
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN; 	// Enabling ADC1 clock
 
 	ADC1->SMPR = 0x7;						// Set the sampling time to a maximum clock cycle (239.5 cycles)
-	ADC1->CHSELR = ADC_CHSELR_CHSEL5; 		// Select channel 5 for ADC conversion (PROBABLY)
+	ADC1->CHSELR = ADC_CHSELR_CHSEL5; 		// Select channel 5 for ADC conversion
 
 	// Calibrate the ADC
 	if (ENABLE_CAL) {
@@ -454,7 +456,7 @@ void myADC_Init() {
 	}
 
 	if (ADC_DEBUG) {
-		trace_printf("Start Enabling ADC, waiting for acknowledgment\n");
+		trace_printf("Start Enabling ADC, waiting for acknowledgment...\n");
 	}
 
 	ADC1->CR |= ADC_CR_ADEN; 				// Enable ADC by setting the ADEN bit high
@@ -462,8 +464,6 @@ void myADC_Init() {
 	if (ADC_DEBUG) {
 		trace_printf("ADC Enabled\n");
 	}
-
-
 
 	/// Set ADC to continuous conversion mode and overwrite old data on overrun
 	ADC1->CFGR1 |= (ADC_CFGR1_CONT | ADC_CFGR1_OVRMOD); // (TEMPORARY)
@@ -484,11 +484,16 @@ uint32_t readADC()
 	/// Start the conversion process of ADC Control Register
 	ADC1->CR |= ADC_CR_ADSTART; 			// ADC group regular conversion start
 
-	/// Wait until the ADC1's end-of-conversion (EOC) flag is set.
-	while (!(ADC1->ISR & ADC_ISR_EOC));
-	// ADC1->ISR &= ~(ADC_ISR_EOC); 			// Reset end of conversion flag
+	/// Wait until the channel sampling is complete
+	while (!(ADC1->ISR & ADC_ISR_EOSMP));
 
-	// Read the ADC result
+	/// After sampling, wait until the ADC1's end-of-conversion (EOC) flag is set.
+	// Hardware sets this bit at the end of each conversion of a
+	// channel when a new result is available in ADC_DR
+    // Hardware clears this bit when ADC_DR is read
+	while (!(ADC1->ISR & ADC_ISR_EOC));
+
+	/// Read the ADC result from DR
 	// Retrieve the ADC value from the register; DR = Data Register
 	return ADC1->DR;
 }
@@ -497,8 +502,11 @@ uint32_t readADC()
 void myDAC_init()
 {
 	RCC->APB1ENR |= RCC_APB1ENR_DACEN;	// Enable DAC Clock
-	DAC->CR &= 0xFFFFFFF8;				// Clear unwanted bits in the CR (TEN1 and BOFF1)
-	DAC->CR |= DAC_CR_EN1;				// Switch the DAC enable bit to 1
+	// DAC->CR &= 0xFFFFFFF8;				// Clear unwanted bits in the CR (TEN1 and BOFF1)
+
+	// Enabling BOFF1 and TEN1 will prevent the frequency from changing
+	DAC->CR &= ~(0x7);				// So, clear all the bits in the CR first (TEN1, EN1 and BOFF1)
+	DAC->CR |= DAC_CR_EN1;	// Switch the DAC enable bit and the trigger bit to 1
 }
 
 // Write to DAC
