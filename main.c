@@ -488,7 +488,7 @@ uint32_t readADC()
 	ADC1->CR |= ADC_CR_ADSTART; 			// ADC group regular conversion start
 
 	/// Wait until the channel sampling is complete
-	while (!(ADC1->ISR & ADC_ISR_EOSMP));
+//	while (!(ADC1->ISR & ADC_ISR_EOSMP)); (Not necessary.)
 
 	/// After sampling, wait until the ADC1's end-of-conversion (EOC) flag is set.
 	// Hardware sets this bit at the end of each conversion of a
