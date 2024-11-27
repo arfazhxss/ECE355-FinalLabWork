@@ -1,7 +1,7 @@
 # Notes
 
 ## Why is there a limitation on detecting a certain range of frequencies?
-(Copied from ChatGPT)
+[Copied from ChatGPT](https://chatgpt.com/share/6746d4db-1a58-8013-9cf1-db1083aea2c7)
 
 ### **System Clock and Timer Counts**
 - The timer counts system clock cycles between two rising edges of the signal. For a 48 MHz clock, each clock cycle is **20.83 ns**.
