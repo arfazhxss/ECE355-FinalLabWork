@@ -13,9 +13,9 @@
   - \( f_{\text{clock}} \) is the system clock frequency (48 MHz in your case).
 
 ### **High-Frequency Signals**
-- For a high-frequency signal like **500 kHz**, the period (\( T \)) is:
+- For a high-frequency signal like **600 kHz**, the period (\( T \)) is:
   \[
-  T = \frac{1}{f_{\text{signal}}} = \frac{1}{500,000} = 2 \, \mu \text{s}
+  T = \frac{1}{f_{\text{signal}}} = \frac{1}{600,000} = 2 \, \mu \text{s}
   \]
 - The number of timer counts in this period is:
   \[
