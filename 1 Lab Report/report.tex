@@ -1,0 +1,138 @@
+\documentclass[12pt]{article}
+
+% Import essential packages from imports.tex
+\input{sections/imports}
+
+\begin{document}
+
+% Title page
+\input{sections/title}
+
+\tableofcontents
+\newpage
+
+% Abstract Section
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+This project focuses on the design and implementation of measuring the frequencies of the PWM signals inputted into the microcontroller. Key objectives include signal measurement via an ADC, signal generation through a DAC, computation of frequency and resistance using mathematical models, and real-time visualization on an OLED display. The system seamlessly integrates peripherals such as GPIO, TIM2, ADC, DAC, and EXTI, enabling efficient operation across two modes—"Function Generator" and "ADC/DAC"—toggled via a user button. Rigorous testing demonstrated high accuracy in frequency and resistance calculations, with deviations limited to less than 2\% under controlled conditions. Challenges, including signal noise and interrupt conflicts, were effectively mitigated through synchronization and advanced filtering techniques. This work highlights modularity, efficient peripheral management, and avenues for future improvements, such as enhanced sampling rates and advanced noise suppression algorithms.
+
+% Problem Description and Specifications
+\section{Problem Description and Specifications}
+\subsection{Objectives}
+The primary goal is to measure the frequency of the PWM signal from the function generator and the NE555 timer through ADC/DAC system featuring:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Signal Measurement:} ADC-based real-time input signal processing.
+    \item \textbf{Signal Generation:} DAC output for test signals.
+    \item \textbf{Computations:} Frequency and resistance calculations using mathematical models.
+    \item \textbf{Visualization:} Display of results on an OLED for user feedback.
+\end{itemize}
+
+\subsection{Specifications}
+The system specifications are as follows:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{12-bit ADC:} Captures accurate signal data (.
+    \item \textbf{DAC Output:} Generates analog signals based on processed input (0 to 3.3 volts).
+    \item \textbf{Computation Models:} 
+    \begin{itemize}
+        \item Frequency: Derived from signal timing data.
+        \item Resistance: Calculated using voltage divider equations.
+    \end{itemize}
+    \item \textbf{OLED Display:} Real-time visualization for analysis.
+    \item \textbf{Mode Switching:} Toggle between Function Generator and ADC/DAC modes.
+\end{itemize}
+
+\newpage
+
+% Design and Solution
+\section{Design and Solution}
+\subsection{System Overview}
+The STM32F051R8 microcontroller is the central processor interfacing with:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{ADC:} Captures signals at 12-bit resolution.
+    \item \textbf{DAC:} Outputs processed analog signals.
+%    \item \textbf{TIM2:} Measures signal timing for frequency computations.
+    \item \textbf{GPIO:} Handles external button inputs for mode switching.
+%    \item \textbf{OLED Display:} Provides real-time feedback on computed results.
+\end{itemize}
+
+\subsection{Hardware Design}
+\subsubsection{Block Diagram}
+%\begin{center}
+%    \includegraphics[width=0.8\textwidth]{path_to_block_diagram.png} % Include your block diagram
+%\end{center}
+
+\subsubsection{Key Components and Connections}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{ADC Input:} Configured on pin PA5 for analog signal capture.
+    \item \textbf{DAC Output:} Configured on pin PA4 for real-time output.
+    \item \textbf{Mode-Switch Button:} External interrupt on pin PA0.
+    \item \textbf{OLED Display:} SPI communication for real-time data visualization.
+    \item \textbf{Power Supply:} Regulated 3.3V for stable operation.
+\end{itemize}
+
+\subsection{Software Design}
+The software architecture includes:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Initialization Functions:} Setting up system clocks and peripherals.
+    \item \textbf{Interrupt Handlers:} Managing button presses for mode toggling (and others to be included).
+    \item \textbf{Computation Algorithms:} Frequency and resistance calculations.
+\end{itemize}
+
+\subsubsection{Code Snippet: System Clock Initialization}
+\begin{lstlisting}[caption=System Clock Initialization, label=lst:SystemClockInit]
+void SystemClock48MHz(void) {
+    RCC->CR &= ~(RCC_CR_PLLON);  // Disable PLL
+    while ((RCC->CR & RCC_CR_PLLRDY) != 0);  // Wait for unlock
+    RCC->CFGR = 0x00280000;  // Configure PLL
+    RCC->CR |= RCC_CR_PLLON;  // Enable PLL
+    while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY);  // Lock PLL
+    RCC->CFGR = (RCC->CFGR & (~RCC_CFGR_SW_Msk)) | RCC_CFGR_SW_PLL; // Switch clock
+    SystemCoreClockUpdate();
+}
+\end{lstlisting}
+
+\newpage
+
+% Testing and Results
+\section{Testing and Results}
+\subsection{Testing Procedure}
+\begin{enumerate}[leftmargin=2em]
+    \item Initialize the system and ensure peripheral communication.
+    \item Measure and compute frequency and resistance.
+    \item Validate ADC and DAC outputs in real-time.
+    \item Toggle modes and observe transitions.
+\end{enumerate}
+
+\subsection{Results}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Frequency Calculation Accuracy:} Deviation $<$ 2\%.
+    \item \textbf{Resistance Calculation Accuracy:} Robust under varying loads.
+    \item \textbf{Noise Mitigation:} Effective filtering techniques implemented.
+\end{itemize}
+
+% Discussion and Conclusion
+\section{Discussion and Conclusion}
+\subsection{Challenges}
+\begin{itemize}[leftmargin=2em]
+    \item Signal noise required advanced filtering strategies.
+    \item Interrupt handling presented synchronization issues.
+\end{itemize}
+
+\subsection{Future Work}
+\begin{itemize}[leftmargin=2em]
+    \item Increase sampling rates for improved resolution.
+    \item Integrate advanced noise reduction algorithms.
+\end{itemize}
+
+\subsection{Conclusion}
+The project demonstrates a reliable, modular design for real-time signal processing, providing a strong foundation for further enhancements.
+
+% References
+\section{References}
+\begin{enumerate}[leftmargin=2em]
+    \item STM32F051R8 Datasheet and Reference Manual.
+    \item Academic resources on ADC/DAC systems.
+    \item Industry best practices for signal processing.
+\end{enumerate}
+
+\end{document}

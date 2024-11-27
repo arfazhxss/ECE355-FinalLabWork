@@ -1,0 +1,54 @@
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{float}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{xcolor} % For custom colors
+\usepackage{listings} % For styled code listings
+
+% Custom color definitions
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{darkblue}{rgb}{0,0,0.55}
+\definecolor{violet}{rgb}{0.5,0,0.5}
+
+% Custom settings for lstlisting
+\lstset{
+  language=C,
+  basicstyle=\footnotesize\ttfamily,
+  numbers=left,
+  numberstyle=\tiny\color{mygray},
+  stepnumber=1,
+  numbersep=5pt,
+  backgroundcolor=\color{white},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  frame=single,
+  rulecolor=\color{black},
+  tabsize=4,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=false,
+  keywordstyle=[1]\bfseries\color{darkblue},
+  keywordstyle=[2]\bfseries\color{violet},
+  commentstyle=\color{mygray},
+  stringstyle=\color{mymauve},
+  escapeinside={\%*}{*)},
+  morekeywords={*,...}
+}
+
+% Header and footer settings
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
