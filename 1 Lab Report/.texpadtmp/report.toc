@@ -54,10 +54,9 @@
 \contentsline {subsection}{\numberline {5.3}Conclusion}{21}{subsection.5.3}%
 \contentsline {section}{\numberline {6}References}{22}{section.6}%
 \contentsline {section}{\numberline {7}Appendices}{23}{section.7}%
-\contentsline {section}{\numberline {8}Appendices}{23}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Main File}{23}{subsection.8.1}%
-\contentsline {subsubsection}{\numberline {8.1.1}\texttt {main.c}}{23}{subsubsection.8.1.1}%
-\contentsline {subsection}{\numberline {8.2}OLED Screen Header}{35}{subsection.8.2}%
-\contentsline {subsubsection}{\numberline {8.2.1}\texttt {oled\_screen.h}}{35}{subsubsection.8.2.1}%
-\contentsline {subsection}{\numberline {8.3}OLED Screen Source}{36}{subsection.8.3}%
-\contentsline {subsubsection}{\numberline {8.3.1}\texttt {oled\_screen.c}}{36}{subsubsection.8.3.1}%
+\contentsline {subsection}{\numberline {7.1}Main File}{23}{subsection.7.1}%
+\contentsline {subsubsection}{\numberline {7.1.1}\texttt {main.c}}{23}{subsubsection.7.1.1}%
+\contentsline {subsection}{\numberline {7.2}OLED Screen Header}{35}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {7.2.1}\texttt {oled\_screen.h}}{35}{subsubsection.7.2.1}%
+\contentsline {subsection}{\numberline {7.3}OLED Screen Source}{36}{subsection.7.3}%
+\contentsline {subsubsection}{\numberline {7.3.1}\texttt {oled\_screen.c}}{36}{subsubsection.7.3.1}%
