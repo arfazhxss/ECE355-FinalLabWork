@@ -19,41 +19,60 @@
 \addbibresource{sections/report.bib}
 \defbibheading{bibliography}{}
 
-% Custom color definitions
-\definecolor{mygray}{rgb}{0.5,0.5,0.5}
-\definecolor{mymauve}{rgb}{0.58,0,0.82}
-\definecolor{darkblue}{rgb}{0,0,0.55}
-\definecolor{violet}{rgb}{0.5,0,0.5}
+% Enhanced settings for lstlisting
+\usepackage{xcolor} % Required for custom colors
+
+% Define custom colors
+\definecolor{bgcolor}{rgb}{0.95,0.95,0.92} % Light beige background
+\definecolor{darkblue}{rgb}{0,0,0.6}       % Deep blue for keywords
+\definecolor{darkviolet}{rgb}{0.5,0,0.5}   % Purple for secondary keywords
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}     % Gray for comments
+\definecolor{mymauve}{rgb}{0.58,0,0.82}    % Mauve for strings
+\definecolor{linenumbergray}{rgb}{0.3,0.3,0.3} % Dark gray for line numbers
 
 % Custom settings for lstlisting
 \lstset{
-  language=C,
-  basicstyle=\footnotesize\ttfamily,
-  numbers=left,
-  numberstyle=\tiny\color{mygray},
-  stepnumber=1,
-  numbersep=5pt,
-  backgroundcolor=\color{white},
-  showspaces=false,
-  showstringspaces=false,
-  showtabs=false,
-  frame=single,
-  rulecolor=\color{black},
-  tabsize=4,
-  captionpos=b,
-  breaklines=true,
-  breakatwhitespace=false,
-  keywordstyle=[1]\bfseries\color{darkblue},
-  keywordstyle=[2]\bfseries\color{violet},
-  commentstyle=\color{mygray},
-  stringstyle=\color{mymauve},
-  escapeinside={\%*}{*)},
-  morekeywords={*,...}
+  language=C, % Set the language to C
+  backgroundcolor=\color{bgcolor}, % Set background color
+  basicstyle=\ttfamily\small, % Set font and size
+  numbers=left, % Add line numbers to the left
+  numberstyle=\color{linenumbergray}\ttfamily\small\bfseries, % Larger, bold line numbers
+  stepnumber=1, % Line number increment
+  numbersep=10pt, % Space between numbers and code
+  frame=single, % Add a frame around the code
+  rulecolor=\color{black}, % Frame border color
+  tabsize=4, % Tab size
+  captionpos=b, % Caption position below the code
+  breaklines=true, % Break long lines
+  breakatwhitespace=false, % Break lines at whitespace if needed
+  keywordstyle=\bfseries\color{darkblue}, % Keywords in bold, dark blue
+  keywordstyle=[2]\bfseries\color{darkviolet}, % Secondary keywords in bold, violet
+  commentstyle=\color{mygray}\itshape, % Comments in italic gray
+  stringstyle=\color{mymauve}, % Strings in mauve
+  showspaces=false, % Don't show spaces
+  showstringspaces=false, % Don't underline spaces in strings
+  showtabs=false, % Don't show tab markers
+  escapeinside={\%*}{*)}, % Escape for inline LaTeX
+  morekeywords={*,...} % Add custom keywords
 }
 
 % Header and footer settings
 \pagestyle{fancy}
+% Clear existing header/footer settings
 \fancyhead{}
 \fancyfoot{}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+
+% Set header and footer
+\fancyhead[L]{ECE 355 Final Lab Report} % Left side of the header
+\fancyhead[R]{\nouppercase{\rightmark}} % Right-aligned header with section title
+\fancyfoot[C]{\thepage} % Centered footer with page number
+
+% Adjust header rule thickness
+\renewcommand{\headrulewidth}{0.4pt} % Header rule thickness
+\renewcommand{\footrulewidth}{0pt} % No footer rule
+
+% Diagram Libraries
+\usepackage{tikz}
+\usetikzlibrary{shapes, backgrounds}
+\usetikzlibrary{fit, positioning, quotes}
+\usetikzlibrary{shadows}

@@ -1,0 +1,20 @@
+\section{Discussion and Conclusion}
+\subsection{Challenges}
+Throughout the development process, several challenges were encountered that required innovative solutions:  
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Signal Noise:} The presence of electrical noise in the ADC and DAC circuits impacted measurement accuracy, necessitating the implementation of decoupling capacitors and basic filtering strategies to stabilize readings.
+    \item \textbf{Interrupt Synchronization:} Managing multiple interrupts for mode switching and signal frequency measurement introduced timing conflicts, which were mitigated through careful prioritization and interrupt-driven control logic.
+    \item \textbf{Frequency Range Limitations:} The system's maximum detectable frequency was constrained by the resolution of TIM2 and EXTI latency, presenting a challenge in achieving higher measurement ranges.
+\end{itemize}
+
+\subsection{Future Work}
+The current system provides a solid baseline, but there are several areas for enhancement to expand its capabilities:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Improved Sampling Rates:} Upgrading the ADC sampling rate and optimizing data acquisition would allow more precise measurements, particularly for rapidly varying signals.
+    \item \textbf{Advanced Noise Reduction:} Implementing digital signal processing (DSP) techniques, such as low-pass filters or averaging algorithms, could further reduce the impact of noise on system performance.
+    \item \textbf{Extended Frequency Range:} Hardware upgrades or optimized software configurations could extend the system's maximum detectable frequency range, improving versatility.
+    \item \textbf{Enhanced User Interface:} Expanding the OLED display to include graphical visualizations of signals and system states could improve user interaction.
+\end{itemize}
+
+\subsection{Conclusion}
+This project successfully developed a modular, reliable system for real-time signal measurement and generation. By leveraging the STM32F0 microcontroller and carefully integrating hardware and software components, the design meets the requirements for frequency and resistance measurement while maintaining responsiveness and precision. Despite challenges such as noise and synchronization complexities, the system performed well under testing and offers a strong platform for future development. This work demonstrates the potential of embedded systems in real-time signal processing and lays the groundwork for advanced implementations.

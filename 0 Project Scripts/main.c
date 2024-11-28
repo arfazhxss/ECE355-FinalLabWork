@@ -3,21 +3,21 @@
 // Copyright (c) 2014 Liviu Ionescu.
 //
 
-// ----------------------------------------------------------------------------
+/*****************************************************************/
 // School: University of Victoria, Canada.
 // Course: ECE 355 "Microprocessor-Based Systems".
 // This is template code for Part 2 of Introductory Lab.
 //
 // See "system/include/cmsis/stm32f051x8.h" for register/bit definitions.
 // See "system/src/cmsis/vectors_stm32f051x8.c" for handler declarations.
-// ----------------------------------------------------------------------------
+/*****************************************************************/
 
 #include <stdio.h>
 #include "diag/Trace.h"
 #include "cmsis/cmsis_device.h"
 #include "oled_screen.h"
 
-// ----------------------------------------------------------------------------
+/*****************************************************************/
 //
 // STM32F0 empty sample (trace via $(trace)).
 //
@@ -26,7 +26,6 @@
 // but can be rerouted to any device or completely suppressed, by
 // changing the definitions required in system/src/diag/trace_impl.c
 // (currently OS_USE_TRACE_ITM, OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
-
 
 /*****************************************************************/
 /**                              PRAGMA                         **/
@@ -38,7 +37,6 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #pragma GCC diagnostic ignored "-Wreturn-type"
-
 
 /*****************************************************************/
 /**                             DEFINES                         **/
@@ -56,7 +54,7 @@
 #define MAIN_DEBUG 1
 #define ADC_DEBUG 0
 #define FREQ_DEBUG 0
-#define ENABLE_CAL 1	// allow calibration
+#define ENABLE_CAL 1 // allow calibration
 #define TOGGLE_DEBUG 0
 #define OUTPUT_DEBUG 0
 
@@ -72,7 +70,6 @@
  * for example the linux kernel
  */
 
-
 /*****************************************************************/
 /**                    FUNCTION PROTOTYPES                      **/
 /*****************************************************************/
@@ -84,7 +81,7 @@ void EXTI_Init(void);
 
 void toggle_mode(void);
 void button_push(void);
-void measure_frequency(unsigned int bit_number, unsigned int* var_address);
+void measure_frequency(unsigned int bit_number, unsigned int *var_address);
 
 /************************** ADC Prototypes **************************/
 void calibrate_ADC(void);
@@ -96,7 +93,6 @@ unsigned int toOhms(uint32_t adc_val);
 void myDAC_init(void);
 void writeDAC(uint32_t adc_val);
 
-
 // Declare/initialize your global variables here...
 // NOTE: You'll need at least one global variable
 // (say, timerTriggered = 0 or 1) to indicate
@@ -104,30 +100,31 @@ void writeDAC(uint32_t adc_val);
 
 /*** Call this function to boost the STM32F0xx clock to 48 MHz ***/
 
-void SystemClock48MHz( void )
+void SystemClock48MHz(void)
 {
 	// Disable the PLL
-    RCC->CR &= ~(RCC_CR_PLLON);
-    // Wait for the PLL to unlock
-    while (( RCC->CR & RCC_CR_PLLRDY ) != 0 );
-    // Configure the PLL for 48-MHz system clock
-    RCC->CFGR = 0x00280000;
-    // Enable the PLL
-    RCC->CR |= RCC_CR_PLLON;
-    // Wait for the PLL to lock
-    while (( RCC->CR & RCC_CR_PLLRDY ) != RCC_CR_PLLRDY );
-    // Switch the processor to the PLL clock source
-    RCC->CFGR = ( RCC->CFGR & (~RCC_CFGR_SW_Msk)) | RCC_CFGR_SW_PLL;
-    // Update the system with the new clock frequency
-    SystemCoreClockUpdate();
-
+	RCC->CR &= ~(RCC_CR_PLLON);
+	// Wait for the PLL to unlock
+	while ((RCC->CR & RCC_CR_PLLRDY) != 0)
+		;
+	// Configure the PLL for 48-MHz system clock
+	RCC->CFGR = 0x00280000;
+	// Enable the PLL
+	RCC->CR |= RCC_CR_PLLON;
+	// Wait for the PLL to lock
+	while ((RCC->CR & RCC_CR_PLLRDY) != RCC_CR_PLLRDY)
+		;
+	// Switch the processor to the PLL clock source
+	RCC->CFGR = (RCC->CFGR & (~RCC_CFGR_SW_Msk)) | RCC_CFGR_SW_PLL;
+	// Update the system with the new clock frequency
+	SystemCoreClockUpdate();
 }
 
 /*****************************************************************/
 /**                       Global Variables                      **/
 /*****************************************************************/
 
-volatile int funcGen_mode = 0;	   // 0 = NEC555 frequency; 1 = Function generator frequency
+volatile int funcGen_mode = 0; // 0 = NEC555 frequency; 1 = Function generator frequency
 volatile uint32_t adc_value;
 
 // Measured values
@@ -135,12 +132,11 @@ unsigned int resistance;
 unsigned int ne555_frequency;
 unsigned int fgen_frequency;
 
-
 /*****************************************************************/
 /**                              MAIN                           **/
 /*****************************************************************/
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 
 	SystemClock48MHz();
@@ -150,36 +146,36 @@ int main(int argc, char* argv[])
 		trace_printf("System clock: %u Hz\n\n", SystemCoreClock);
 	}
 
-	myGPIOA_Init();				// Initialize I/O port PA
-	myTIM2_Init();				// Initialize timer TIM2
-	EXTI_Init();				// Initialize EXTI
+	myGPIOA_Init(); // Initialize I/O port PA
+	myTIM2_Init();	// Initialize timer TIM2
+	EXTI_Init();	// Initialize EXTI
 
-
-	myADC_Init();				// Initialize ADC
-	myDAC_init();				// Initialize DAC
+	myADC_Init(); // Initialize ADC
+	myDAC_init(); // Initialize DAC
 
 	oled_config();
 
-	while (1) {
-		adc_value = readADC();				// Read from the potentiometer
-		resistance = toOhms(adc_value);		// Convert the ADC value to resistance and updates it regularly
-		writeDAC(adc_value);				// Writes the value
+	while (1)
+	{
+		adc_value = readADC();			// Read from the potentiometer
+		resistance = toOhms(adc_value); // Convert the ADC value to resistance and updates it regularly
+		writeDAC(adc_value);			// Writes the value
 
 		// Display values to the LED screen
-		if (!funcGen_mode) {
+		if (!funcGen_mode)
+		{
 			// 1 - NE555 Timer
 			refresh_OLED(resistance, ne555_frequency, 1);
 		}
-		else {
+		else
+		{
 			// 2 - NE555 Timer
 			refresh_OLED(resistance, fgen_frequency, 2);
 		}
 	}
 
 	return 0;
-
 }
-
 
 void myGPIOA_Init()
 {
@@ -192,23 +188,21 @@ void myGPIOA_Init()
 
 	/* Configure PA0 (button) as input from the function generator */
 	// Relevant register: GPIOA->MODER
-	GPIOA->MODER &= ~(GPIO_MODER_MODER0);	// Clear bits PA0
+	GPIOA->MODER &= ~(GPIO_MODER_MODER0); // Clear bits PA0
 
 	/* Configure PA1 (555 timer) as input from the function generator */
 	// Relevant register: GPIOA->MODER
-	GPIOA->MODER &= ~(GPIO_MODER_MODER1);	// Set the PA1 bits to 00 (where 00 - input)
+	GPIOA->MODER &= ~(GPIO_MODER_MODER1); // Set the PA1 bits to 00 (where 00 - input)
 
 	/* Configure PA2 (function generator) as input from the function generator */
 	// Relevant register: GPIOA->MODER
-	GPIOA->MODER &= ~(GPIO_MODER_MODER2);	// Set the PA2 bits to 00 (where 00 - input)
-
+	GPIOA->MODER &= ~(GPIO_MODER_MODER2); // Set the PA2 bits to 00 (where 00 - input)
 
 	// Set GPIO PA5 and PA4 to Analog Mode, (Or I can use 0x3 << 10) // 11 - Analog
 	GPIOA->MODER |= GPIO_MODER_MODER4;
 	GPIOA->MODER |= GPIO_MODER_MODER5;
-//	GPIOA->MODER |= 0xC00;	// Set GPIO Pin A to Analog Mode, (Or I can use 0x3 << 10)
-//	GPIOA->MODER |= 0x300;	// (or 0x3 << 8)
-
+	//	GPIOA->MODER |= 0xC00;	// Set GPIO Pin A to Analog Mode, (Or I can use 0x3 << 10)
+	//	GPIOA->MODER |= 0x300;	// (or 0x3 << 8)
 
 	/*Ensure no pull-up/pull-down for PA0*/
 	//	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR0);
@@ -217,7 +211,6 @@ void myGPIOA_Init()
 	// Relevant register: GPIOA->PUPDR
 	GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR1 | GPIO_PUPDR_PUPDR2);
 }
-
 
 void myTIM2_Init()
 {
@@ -246,12 +239,12 @@ void myTIM2_Init()
 	TIM2->DIER |= TIM_DIER_UIE;
 }
 
-void EXTI_Init() {
+void EXTI_Init()
+{
 	/* Map EXTI2 and EXTI0 line to PA2 and PA0 respectively */
 	// Relevant register: SYSCFG -> EXTICR[0]
 	SYSCFG->EXTICR[0] &= ~(SYSCFG_EXTICR1_EXTI0 | SYSCFG_EXTICR1_EXTI1 | SYSCFG_EXTICR1_EXTI2);
 	SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PA | SYSCFG_EXTICR1_EXTI1_PA | SYSCFG_EXTICR1_EXTI2_PA);
-
 
 	// SYSCFG->EXTICR[0] &= 0xFF0F;
 
@@ -278,7 +271,6 @@ void EXTI_Init() {
 	NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
-
 /* This handler is declared in system/src/cmsis/vectors_stm32f051x8.c */
 void TIM2_IRQHandler()
 {
@@ -287,56 +279,68 @@ void TIM2_IRQHandler()
 	{
 		trace_printf("\n*** Overflow in TIM2! ***\n");
 
-		TIM2->SR &= ~TIM_SR_UIF;		// Clear update interrupt flag
-		TIM2->CR1 |= TIM_CR1_CEN;		// Restart stopped timer
+		TIM2->SR &= ~TIM_SR_UIF;  // Clear update interrupt flag
+		TIM2->CR1 |= TIM_CR1_CEN; // Restart stopped timer
 	}
 }
 
-
 /* Toggles between the mode for NE555 and the function generator */
-void toggle_mode() {
+void toggle_mode()
+{
 	// Simply flip the boolean
 	funcGen_mode = !funcGen_mode;
 
 	// Disable one of the interrupts
-	if (!funcGen_mode) {	// If using 555 timer
+	if (!funcGen_mode)
+	{ // If using 555 timer
 		EXTI->IMR &= ~(EXTI_IMR_IM2);
 		EXTI->IMR |= EXTI_IMR_IM1;
 	}
-	else {
+	else
+	{
 		EXTI->IMR &= ~(EXTI_IMR_IM1);
 		EXTI->IMR |= EXTI_IMR_IM2;
 	}
 
 	// Prints out to the console
-	if (TOGGLE_DEBUG) {
-		if (!funcGen_mode) {
+	if (TOGGLE_DEBUG)
+	{
+		if (!funcGen_mode)
+		{
 			trace_printf("<<<< NEC555 TIMER >>>>\n");
 		}
-		else {
+		else
+		{
 			trace_printf("<<<< FUNCTION GENERATOR >>>>\n");
 		}
 	}
 
-	if (OUTPUT_DEBUG) {
-		if (!funcGen_mode) {
+	if (OUTPUT_DEBUG)
+	{
+		if (!funcGen_mode)
+		{
 			trace_printf("Resistance: %u\n", resistance);
 			trace_printf("Frequency 1: %u\n\n", ne555_frequency);
 		}
-		else {
+		else
+		{
 			trace_printf("Frequency 2: %u\n\n", fgen_frequency);
 		}
 	}
-
 }
 
-void button_push() {
+void button_push()
+{
 	// There is some change in the voltage value
-	if ((EXTI->PR & EXTI_PR_PR0) != 0){
+	if ((EXTI->PR & EXTI_PR_PR0) != 0)
+	{
 
-		if((GPIOA->IDR & GPIO_IDR_0) != 0){
+		if ((GPIOA->IDR & GPIO_IDR_0) != 0)
+		{
 			// Wait for button to be released (PA0 = 0)
-			while((GPIOA->IDR & GPIO_IDR_0) != 0) {}
+			while ((GPIOA->IDR & GPIO_IDR_0) != 0)
+			{
+			}
 
 			// Trigger a function or a block of code here *************
 			toggle_mode();
@@ -348,14 +352,15 @@ void button_push() {
 }
 
 /* Measures the frequency and stores the value */
-void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
+void measure_frequency(unsigned int bit_number, unsigned int *var_address)
+{
 
 	// Declare/initialize your local variables here...
-    unsigned int count = 0;
-    float period = 0;
-    float frequency = 0;
+	unsigned int count = 0;
+	float period = 0;
+	float frequency = 0;
 
-    uint32_t register_mask = EXTI_PR_PR0 << bit_number;
+	uint32_t register_mask = EXTI_PR_PR0 << bit_number;
 
 	/* Check if EXTI2 interrupt pending flag is indeed set */
 	if ((EXTI->PR & register_mask) != 0)
@@ -376,55 +381,60 @@ void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
 		//
 
 		// Start the TIM2 timer
-		if((TIM2->CR1 & TIM_CR1_CEN) == 0){
+		if ((TIM2->CR1 & TIM_CR1_CEN) == 0)
+		{
 			TIM2->CNT = 0;
 			TIM2->CR1 |= TIM_CR1_CEN;
 		}
-		else{
-            TIM2->CR1 &= ~(TIM_CR1_CEN);
-            count = TIM2->CNT;
-            period = (float)count / (float)SystemCoreClock;
-            frequency = 1 / period;
+		else
+		{
+			TIM2->CR1 &= ~(TIM_CR1_CEN);
+			count = TIM2->CNT;
+			period = (float)count / (float)SystemCoreClock;
+			frequency = 1 / period;
 
-//            trace_printf("Resistance: %u\n", resistance);
-            *var_address = (unsigned int)(frequency);
+			//            trace_printf("Resistance: %u\n", resistance);
+			*var_address = (unsigned int)(frequency);
 
-            // Check if the frequency value is saved
-            if (FREQ_DEBUG) {
-            	if (bit_number == 1) {
-            		trace_printf("Frequency: %u\n", ne555_frequency);
-            	}
-            	else if (bit_number == 2) {
-            		trace_printf("Frequency: %u\n", fgen_frequency);
-            	}
-            }
+			// Check if the frequency value is saved
+			if (FREQ_DEBUG)
+			{
+				if (bit_number == 1)
+				{
+					trace_printf("Frequency: %u\n", ne555_frequency);
+				}
+				else if (bit_number == 2)
+				{
+					trace_printf("Frequency: %u\n", fgen_frequency);
+				}
+			}
 		}
 
 		// 2. Clear EXTI2 interrupt pending flag (EXTI->PR).
 		// NOTE: A pending register (PR) bit is cleared
 		// by writing 1 to it.
 		//
-		EXTI->PR |= register_mask;	// Clear interrupt flag for the given bit number
+		EXTI->PR |= register_mask; // Clear interrupt flag for the given bit number
 	}
 }
-
 
 void EXTI0_1_IRQHandler()
 {
 	// processes the button push
 	button_push();
 
-	if (!funcGen_mode) {	// If in 555 timer mode
+	if (!funcGen_mode)
+	{ // If in 555 timer mode
 		// Measure frequency from PA1 (555 timer)
 		measure_frequency(1, &ne555_frequency);
 	}
 }
 
-
 /* This handler is declared in system/src/cmsis/vectors_stm32f051x8.c */
 void EXTI2_3_IRQHandler()
 {
-	if (funcGen_mode) {		// If in Function generator mode
+	if (funcGen_mode)
+	{ // If in Function generator mode
 		// Measure frequency from PA1 (555 timer)
 		measure_frequency(2, &fgen_frequency);
 	}
@@ -434,37 +444,48 @@ void EXTI2_3_IRQHandler()
 /**                           UTILITIES                         **/
 /*****************************************************************/
 
-
-
 /*** Initializing Analog to Digital Conversion ***/
 
 /** Calibrates the ADC **/
-void calibrate_ADC(void) {
-	if (ADC_DEBUG) { trace_printf("Start ADC Calibration\n"); }
-	ADC1->CR = ADC_CR_ADCAL;				// Start ADC self-calibration process
-	while (ADC1->CR == ADC_CR_ADCAL);		// Wait until ADC calibration completes
-	if (ADC_DEBUG) { trace_printf("Finished ADC calibration\n"); }
+void calibrate_ADC(void)
+{
+	if (ADC_DEBUG)
+	{
+		trace_printf("Start ADC Calibration\n");
+	}
+	ADC1->CR = ADC_CR_ADCAL; // Start ADC self-calibration process
+	while (ADC1->CR == ADC_CR_ADCAL)
+		; // Wait until ADC calibration completes
+	if (ADC_DEBUG)
+	{
+		trace_printf("Finished ADC calibration\n");
+	}
 }
 
 /* Initializes the ADC to read values from a Potentiometer in Line 5*/
-void myADC_Init() {
-	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN; 	// Enabling ADC1 clock
+void myADC_Init()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN; // Enabling ADC1 clock
 
-	ADC1->SMPR = 0x7;						// Set the sampling time to a maximum clock cycle (239.5 cycles)
-	ADC1->CHSELR = ADC_CHSELR_CHSEL5; 		// Select channel 5 for ADC conversion
+	ADC1->SMPR = 0x7;				  // Set the sampling time to a maximum clock cycle (239.5 cycles)
+	ADC1->CHSELR = ADC_CHSELR_CHSEL5; // Select channel 5 for ADC conversion
 
 	// Calibrate the ADC
-	if (ENABLE_CAL) {
+	if (ENABLE_CAL)
+	{
 		calibrate_ADC();
 	}
 
-	if (ADC_DEBUG) {
+	if (ADC_DEBUG)
+	{
 		trace_printf("Start Enabling ADC, waiting for acknowledgment...\n");
 	}
 
-	ADC1->CR |= ADC_CR_ADEN; 				// Enable ADC by setting the ADEN bit high
-	while (!(ADC1->ISR & ADC_ISR_ADRDY)); 	// Wait until ADC is ready for conversion
-	if (ADC_DEBUG) {
+	ADC1->CR |= ADC_CR_ADEN; // Enable ADC by setting the ADEN bit high
+	while (!(ADC1->ISR & ADC_ISR_ADRDY))
+		; // Wait until ADC is ready for conversion
+	if (ADC_DEBUG)
+	{
 		trace_printf("ADC Enabled\n");
 	}
 
@@ -477,24 +498,25 @@ unsigned int toOhms(uint32_t adc_val)
 {
 	// Rescaled the ADC Value to the resistance of the potentiometer
 	// 4096 is the maximum 12-bit value from the ADC
-	// Maximum resistance of the potentiometer = 5000 Ω
-	return (unsigned int) (((float) adc_val/4095.0) * 5000.0);
+	// Maximum resistance of the potentiometer = 5000 Ohm
+	return (unsigned int)(((float)adc_val / 4095.0) * 5000.0);
 }
 
 /* Converts and reads the ADC value */
 uint32_t readADC()
 {
 	/// Start the conversion process of ADC Control Register
-	ADC1->CR |= ADC_CR_ADSTART; 			// ADC group regular conversion start
+	ADC1->CR |= ADC_CR_ADSTART; // ADC group regular conversion start
 
 	/// Wait until the channel sampling is complete
-//	while (!(ADC1->ISR & ADC_ISR_EOSMP)); (Not necessary.)
+	//	while (!(ADC1->ISR & ADC_ISR_EOSMP)); (Not necessary.)
 
 	/// After sampling, wait until the ADC1's end-of-conversion (EOC) flag is set.
 	// Hardware sets this bit at the end of each conversion of a
 	// channel when a new result is available in ADC_DR
-    // Hardware clears this bit when ADC_DR is read
-	while (!(ADC1->ISR & ADC_ISR_EOC));
+	// Hardware clears this bit when ADC_DR is read
+	while (!(ADC1->ISR & ADC_ISR_EOC))
+		;
 
 	/// Read the ADC result from DR
 	// Retrieve the ADC value from the register; DR = Data Register
@@ -504,21 +526,21 @@ uint32_t readADC()
 /* Initializes the DAC to read values output from PA4 */
 void myDAC_init()
 {
-	RCC->APB1ENR |= RCC_APB1ENR_DACEN;	// Enable DAC Clock
+	RCC->APB1ENR |= RCC_APB1ENR_DACEN; // Enable DAC Clock
 	// DAC->CR &= 0xFFFFFFF8;				// Clear unwanted bits in the CR (TEN1 and BOFF1)
 
 	// Enabling BOFF1 and TEN1 will prevent the frequency from changing
-	DAC->CR &= ~(0x7);				// So, clear all the bits in the CR first (TEN1, EN1 and BOFF1)
-	DAC->CR |= DAC_CR_EN1;	// Switch the DAC enable bit and the trigger bit to 1
+	DAC->CR &= ~(0x7);	   // So, clear all the bits in the CR first (TEN1, EN1 and BOFF1)
+	DAC->CR |= DAC_CR_EN1; // Switch the DAC enable bit and the trigger bit to 1
 }
 
 // Write to DAC
-void writeDAC(uint32_t adc_val) {
+void writeDAC(uint32_t adc_val)
+{
 	// DHR12R1 is the 12-bit right-aligned data
 	DAC->DHR12R1 = adc_val;
 }
 
-
 #pragma GCC diagnostic pop
 
-// ----------------------------------------------------------------------------
+/*****************************************************************/

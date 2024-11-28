@@ -12,51 +12,30 @@
 \newpage
 
 % Abstract Section
-\input{sections/abstract.tex}
+\input{sections/abstract}
+\newpage
 
 % Problem Description and Specification
-\input{sections/problem-description.tex}
+\input{sections/problem-description}
+\newpage
 
 % Design and Solution
-\input{sections/design.tex}
-
+\input{sections/design}
 \newpage
 
 % Testing and Results
-\section{Testing and Results}
-\subsection{Testing Procedure}
-\begin{enumerate}[leftmargin=2em]
-    \item Initialize the system and ensure peripheral communication.
-    \item Measure and compute frequency and resistance.
-    \item Validate ADC and DAC outputs in real-time.
-    \item Toggle modes and observe transitions.
-\end{enumerate}
-
-\subsection{Results}
-\begin{itemize}[leftmargin=2em]
-    \item \textbf{Frequency Calculation Accuracy:} Deviation $<$ 2\%.
-    \item \textbf{Resistance Calculation Accuracy:} Robust under varying loads.
-    \item \textbf{Noise Mitigation:} Effective filtering techniques implemented.
-\end{itemize}
+\input{sections/testing}
+\newpage
 
 % Discussion and Conclusion
-\section{Discussion and Conclusion}
-\subsection{Challenges}
-\begin{itemize}[leftmargin=2em]
-    \item Signal noise required advanced filtering strategies.
-    \item Interrupt handling presented synchronization issues.
-\end{itemize}
-
-\subsection{Future Work}
-\begin{itemize}[leftmargin=2em]
-    \item Increase sampling rates for improved resolution.
-    \item Integrate advanced noise reduction algorithms.
-\end{itemize}
-
-\subsection{Conclusion}
-The project demonstrates a reliable, modular design for real-time signal processing, providing a strong foundation for further enhancements.
+\input{sections/discussion}
+\newpage
 
 % References
-\section{References}
-\printbibliography[title={}]
-\end{document}	
+\input{sections/references}
+\newpage
+
+% Appendices
+\input{sections/appendices}
+
+\end{document}

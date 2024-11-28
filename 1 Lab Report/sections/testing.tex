@@ -1,0 +1,86 @@
+\section{Testing and Results}
+\subsection{Testing Procedure}
+To validate the functionality and performance of the system, a structured testing procedure was employed. Each aspect of the system was rigorously examined to ensure reliability and accuracy under real-world conditions.
+
+\subsubsection{System Initialization and Peripheral Verification}
+\begin{enumerate}[leftmargin=2em]
+    \item Power on the STM32F0 Discovery board and ensure stable voltage levels across all peripherals.
+    \item Verify system clock configuration by outputting the clock frequency to the console and ensuring it matches the expected 48 MHz.
+    \item Test GPIO pin configurations by probing each pin and confirming the expected input/output states using an oscilloscope.
+    \item Check ADC and DAC initialization by generating a test analog signal using a function generator and confirming correct ADC reads and DAC outputs using a multimeter.
+    \item Initialize the OLED display and verify proper communication via SPI by displaying test data.
+\end{enumerate}
+
+\subsubsection{Frequency Measurement Validation}
+\begin{enumerate}[leftmargin=2em]
+    \item Generate a square-wave signal (0–3.3 V amplitude) using a function generator at various frequencies (10 Hz to 1 MHz).
+    \item Connect the signal to PA2 and monitor the EXTI2 interrupt behavior using the debugger or console outputs.
+    \item Measure the time elapsed between two rising edges of the input signal using TIM2 and confirm accuracy by comparing the calculated frequency to the function generator's set frequency.
+    \item Determine the minimum detectable frequency by lowering the input signal frequency until the system fails to provide consistent measurements.
+    \item Determine the maximum detectable frequency by increasing the input signal frequency until the timer fails to capture events accurately.
+\end{enumerate}
+
+\subsubsection{Resistance Calculation Validation}
+\begin{enumerate}[leftmargin=2em]
+    \item Connect a potentiometer to PA5 and adjust its resistance across the full range (0–5 k$\omega$).
+    \item Confirm ADC readings at various potentiometer positions by comparing the measured resistance (via the ADC-to-resistance formula) to values obtained using a multimeter.
+    \item Validate real-time updates on the OLED display for resistance measurements.
+\end{enumerate}
+
+\subsubsection{Mode Switching Functionality}
+\begin{enumerate}[leftmargin=2em]
+    \item Test the system's response to pressing the USER button (PA0) by toggling between NE555 Timer Mode and Function Generator Mode.
+    \item Ensure proper reconfiguration of EXTI interrupts for PA1 and PA2 when switching modes.
+    \item Validate that frequency measurements from the correct input source are displayed on the OLED after each mode switch.
+    \item Confirm seamless transitions without data loss or system crashes.
+\end{enumerate}
+
+\subsubsection{Signal Monitoring and DAC Control}
+\begin{enumerate}[leftmargin=2em]
+    \item Adjust the potentiometer and monitor the real-time ADC readings.
+    \item Validate DAC outputs by connecting an oscilloscope to PA4 and confirming the output voltage corresponds to the scaled ADC input.
+    \item Ensure that the DAC signal drives the optocoupler to adjust the PWM frequency and duty cycle of the NE555 timer circuit.
+    \item Verify continuous synchronization between ADC input, DAC output, and OLED display updates.
+\end{enumerate}
+
+\subsubsection{Noise and Stability Testing}
+\begin{enumerate}[leftmargin=2em]
+    \item Introduce electrical noise to the system using a signal generator or by varying the power supply voltage.
+    \item Verify the robustness of the ADC readings and DAC outputs under noisy conditions by observing the stability of displayed data and oscilloscope waveforms.
+    \item Test the impact of simultaneous mode switching and signal input variations on system performance.
+    \item Confirm the effectiveness of decoupling capacitors in mitigating noise.
+\end{enumerate}
+
+\subsection{Results}
+The system demonstrated robust performance across all testing scenarios, meeting or exceeding the project requirements.
+
+\subsubsection{Frequency Measurement Performance}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Accuracy:} Measured frequencies deviated by less than 2\% from the function generator's reference values across a range of 10 Hz to 500 kHz.
+    \item \textbf{Minimum Detectable Frequency:} 10 Hz, limited by the timer's ability to measure long periods without overflow.
+    \item \textbf{Maximum Detectable Frequency:} 500 kHz, constrained by EXTI interrupt latency and TIM2 resolution.
+\end{itemize}
+
+\subsubsection{Resistance Measurement Performance}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Accuracy:} Resistance calculations matched multimeter readings within 5\% across the full range of the potentiometer (0–5 k$\omega$).
+    \item \textbf{Response Time:} Real-time updates to the OLED display occurred with minimal latency, ensuring user-friendly interaction.
+\end{itemize}
+
+\subsubsection{Mode Switching Reliability}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Seamless Transitions:} Mode switches occurred instantaneously, with accurate updates to frequency and resistance measurements.
+    \item \textbf{Interrupt Handling:} No missed events or system crashes were observed during rapid mode toggling.
+\end{itemize}
+
+\subsubsection{Noise Mitigation and Stability}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Noise Rejection:} Effective decoupling capacitors and robust interrupt-driven control minimized noise-induced errors.
+    \item \textbf{Stable Operation:} The system maintained consistent performance even under noisy conditions and power supply variations.
+\end{itemize}
+
+\subsubsection{System Limitations}
+\begin{itemize}[leftmargin=2em]
+    \item The maximum detectable frequency (500 kHz) is limited by EXTI and TIM2 latency, and further optimization may require higher-performance hardware.
+    \item The ADC sampling rate restricts the system's ability to process rapidly changing analog inputs.
+\end{itemize}

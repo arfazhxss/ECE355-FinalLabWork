@@ -1,0 +1,97 @@
+\begin{tikzpicture}[
+    node distance = 1cm,
+    box/.style={
+        draw=black,
+        rectangle,
+        minimum width=2.5cm,
+        minimum height=1cm,
+        align=center,
+        rounded corners=3pt,
+        fill=white,
+        text=black,
+        thick
+    },
+    group/.style={
+        draw=black,
+        rectangle,
+        inner sep=0.5cm,
+        rounded corners=5pt,
+        thick
+    },
+    connection/.style={
+        ultra thick,
+        ->,
+        >=stealth
+    }
+]
+
+% External Components Group (Top Right)
+\begin{scope}[xshift=12cm, local bounding box=ext]
+    \node[box] (pot) at (0,0) {Potentiometer};
+    \node[box] (adc_in) [right=1cm of pot] {ADC Input};
+    
+    \node[box] (ne555) [below=0.5cm of pot] {NE555 Timer};
+    \node[box] (freq1) [right=1cm of ne555] {Frequency\\Input 1};
+    
+    \node[box] (fgen) [below=0.5cm of ne555] {Function\\Generator};
+    \node[box] (freq2) [right=1cm of fgen] {Frequency\\Input 2};
+    
+    \node[box] (btn) [below=0.5cm of fgen] {Mode Button};
+    \node[box] (btn_in) [right=1cm of btn] {Button Input};
+    
+    \node[group] (ext_group) [fit=(pot) (adc_in) (ne555) (freq1) (fgen) (freq2) (btn) (btn_in)] {};
+    \node[above, font=\bfseries] at (ext_group.north) {External Components};
+\end{scope}
+
+% STM32F0 Core Group - Inputs (Top Left)
+\begin{scope}[xshift=3cm, yshift=-2cm, local bounding box=inputs]
+    \node[box] (adc) at (0,0) {ADC Module};
+    \node[box] (tim) [below=0.5cm of adc] {Timer Module};
+    \node[box] (exti) [below=0.5cm of tim] {External\\Interrupt};
+    \node[group] (input_group) [fit=(adc) (tim) (exti)] {};
+    \node[above, font=\bfseries] at (input_group.north) {Inputs};
+\end{scope}
+
+% Processing subgroup (Bottom Right)
+\begin{scope}[xshift=7cm, yshift=-8cm, local bounding box=proc]
+    \node[box] (cpu) at (0,0) {CPU Core};
+    \node[box] (dac) [below=0.5cm of cpu] {DAC Module};
+    \node[box] (disp) [below=0.5cm of dac] {Display\\Controller};
+    \node[group] (proc_group) [fit=(cpu) (dac) (disp)] {};
+    \node[above, font=\bfseries] at (proc_group.north) {Processing};
+\end{scope}
+
+% Draw Core group around both Input and Processing
+\node[group] (core_group) [fit=(input_group) (proc_group)] {};
+\node[above, font=\bfseries] at (core_group.north) {STM32F0 Core};
+
+% Outputs Group (Bottom Left)
+\begin{scope}[xshift=3cm, yshift=-8cm, local bounding box=out]
+    \node[box] (ana_out) at (0,0) {Analog Output};
+    \node[box] (oled) [below=0.5cm of ana_out] {OLED Display};
+    \node[group] (out_group) [fit=(ana_out) (oled)] {};
+    \node[above, font=\bfseries] at (out_group.north) {Outputs};
+\end{scope}
+
+% Connections with bend to avoid text
+\draw[connection] (pot) -- (adc_in);
+\draw[connection] (ne555) -- (freq1);
+\draw[connection] (fgen) -- (freq2);
+\draw[connection] (btn) -- (btn_in);
+
+\draw[connection] (adc_in) to[bend right=30] (adc);
+\draw[connection] (freq1) to[bend right=20] (tim);
+\draw[connection] (freq2) to[bend right=15] (tim);
+\draw[connection] (btn_in) to[bend right=10] (exti);
+
+\draw[connection] (adc) to[bend right=10] (cpu);
+\draw[connection] (tim) -- (cpu);
+\draw[connection] (exti) to[bend left=10] (cpu);
+
+\draw[connection] (cpu) -- (dac);
+\draw[connection] (cpu) -- (disp);
+
+\draw[connection] (dac) to[bend right=30] (ana_out);
+\draw[connection] (disp) to[bend right=20] (oled);
+
+\end{tikzpicture}

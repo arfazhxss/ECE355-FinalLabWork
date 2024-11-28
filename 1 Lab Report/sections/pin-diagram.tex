@@ -1,0 +1,76 @@
+\begin{tikzpicture}[
+    node distance = 2cm,
+    box/.style={
+        draw=black,
+        rectangle,
+        minimum width=2cm,
+        align=center,
+        rounded corners=3pt,
+        fill=white,
+        text=black,
+        thick
+    },
+    group/.style={
+        draw=black,
+        rectangle,
+        inner sep=0.5cm,
+        rounded corners=5pt,
+        thick
+    },
+    connection/.style={
+        ultra thick,
+        ->,
+        >=stealth
+    }
+]
+
+% Calculate total height for vertical centering
+\def\totalheight{7cm}  % Approximate height of the boxes
+
+% STM32F0 Group
+\begin{scope}[local bounding box=stm]
+    \node[box] (pa0) at (0,\totalheight/2) {PA0:\\ Mode Button};
+    \node[box] (pa1) [below=0.5cm of pa0] {PA1:\\ NE555 Input};
+    \node[box] (pa2) [below=0.5cm of pa1] {PA2:\\ FGen Input};
+    \node[box] (pa4) [below=0.5cm of pa2] {PA4:\\ DAC Output};
+    \node[box] (pa5) [below=0.5cm of pa4] {PA5:\\ ADC Input};
+    \node[group] (stm32) [fit=(pa0) (pa1) (pa2) (pa4) (pa5)] {};
+    \node[above, font=\bfseries] at (stm32.north) {STM32F0};
+\end{scope}
+
+% Features Group
+\begin{scope}[xshift=6cm, local bounding box=feat]  % Increased xshift
+    \node[box] (dig) at (0,\totalheight/2) {Digital Input Mode};
+    \node[box] (freq1) [below=0.5cm of dig] {Frequency Input Mode};
+    \node[box] (freq2) [below=0.5cm of freq1] {Frequency Input Mode};
+    \node[box] (anaout) [below=0.5cm of freq2] {Analog Output Mode};
+    \node[box] (anain) [below=0.5cm of anaout] {Analog Input Mode};
+    \node[group] (features) [fit=(dig) (freq1) (freq2) (anaout) (anain)] {};
+    \node[above, font=\bfseries] at (features.north) {Features};
+\end{scope}
+
+% Characteristics Group
+\begin{scope}[xshift=12cm, local bounding box=char]  % Increased xshift
+    \node[box] (btnchar) at (0,\totalheight/2) {Pull-up enabled\\ EXTI enabled};
+    \node[box] (freq1char) [below=0.5cm of btnchar] {No pull-up/down\\ EXTI enabled};
+    \node[box] (freq2char) [below=0.5cm of freq1char] {No pull-up/down\\ EXTI enabled};
+    \node[box] (dacchar) [below=0.5cm of freq2char] {12-bit resolution\\ 0.126-2.23V range};
+    \node[box] (adcchar) [below=0.5cm of dacchar] {12-bit resolution\\ 0-3.3V range};
+    \node[group] (chars) [fit=(btnchar) (freq1char) (freq2char) (dacchar) (adcchar)] {};
+    \node[above, font=\bfseries] at (chars.north) {Characteristics};
+\end{scope}
+
+% Connections with distinct colors
+\draw[connection, blue] (pa0) -- (dig);
+\draw[connection, red] (pa1) -- (freq1);
+\draw[connection, green!50!black] (pa2) -- (freq2);
+\draw[connection, orange] (pa4) -- (anaout);
+\draw[connection, purple] (pa5) -- (anain);
+
+\draw[connection, blue] (dig) -- (btnchar);
+\draw[connection, red] (freq1) -- (freq1char);
+\draw[connection, green!50!black] (freq2) -- (freq2char);
+\draw[connection, orange] (anaout) -- (dacchar);
+\draw[connection, purple] (anain) -- (adcchar);
+
+\end{tikzpicture}
