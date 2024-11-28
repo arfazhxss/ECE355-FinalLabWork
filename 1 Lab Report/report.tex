@@ -1,4 +1,6 @@
 \documentclass[12pt]{article}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 % Import essential packages from imports.tex
 \input{sections/imports}
@@ -19,7 +21,7 @@ This project focuses on the design and implementation of measuring the frequenci
 % Problem Description and Specifications
 \section{Problem Description and Specifications}
 \subsection{Objectives}
-The primary goal is to measure the frequency of the PWM signal from the function generator and the NE555 timer through ADC/DAC system featuring:
+The primary goal is to measure the frequency of the square-wave signal from the function generator and the PWM signal the NE555 timer through ADC/DAC system featuring:
 \begin{itemize}[leftmargin=2em]
     \item \textbf{Signal Measurement:} ADC-based real-time input signal processing.
     \item \textbf{Signal Generation:} DAC output for test signals.
@@ -30,7 +32,7 @@ The primary goal is to measure the frequency of the PWM signal from the function
 \subsection{Specifications}
 The system specifications are as follows:
 \begin{itemize}[leftmargin=2em]
-    \item \textbf{12-bit ADC:} Captures accurate signal data (.
+    \item \textbf{12-bit ADC:} Captures accurate signal data.
     \item \textbf{DAC Output:} Generates analog signals based on processed input (0 to 3.3 volts).
     \item \textbf{Computation Models:} 
     \begin{itemize}
@@ -78,6 +80,8 @@ The software architecture includes:
     \item \textbf{Computation Algorithms:} Frequency and resistance calculations.
 \end{itemize}
 
+\newpage
+
 \subsubsection{Code Snippet: System Clock Initialization}
 \begin{lstlisting}[caption=System Clock Initialization, label=lst:SystemClockInit]
 void SystemClock48MHz(void) {
@@ -91,8 +95,6 @@ void SystemClock48MHz(void) {
 }
 \end{lstlisting}
 
-\newpage
-
 % Testing and Results
 \section{Testing and Results}
 \subsection{Testing Procedure}
@@ -104,27 +106,154 @@ void SystemClock48MHz(void) {
 \end{enumerate}
 
 \subsection{Results}
+
+\subsubsection{Frequency Measurements}
+\label{subsubsec:results}
+
+The graph below shows the plot of measured frequencies with the frequencies from the function generator.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel={Frequency (Hz)},       % Label for the x-axis
+            ylabel={Measured Frequency (Hz)},       % Label for the y-axis
+            grid=both,               % Add a grid
+        grid style={dotted},
+            width=12cm,              % Adjust width
+            height=8cm,              % Adjust height
+            legend style={at={(0.5,-0.2)}, anchor=north, legend columns=-1},
+            legend entries={Expected Curve, Actual Curve},
+            legend cell align={left}
+        ]
+            \addplot[
+                color=blue,         % Line color,
+                dashed,
+                mark=*              % Marker style
+            ] 
+            table[
+                col sep=comma,      % Column separator (comma for CSV files)
+                x=Input,                % Specify column for x
+                y=Expected                 % Specify column for y
+            ] {tables/freq_measurements.csv};
+
+            \addplot[
+                color=red,         % Line color,
+                mark=*              % Marker style
+            ] 
+            table[
+                col sep=comma,      % Column separator (comma for CSV files)
+                x=Input,                % Specify column for x
+                y=Measured                 % Specify column for y
+            ] {tables/freq_measurements.csv};
+       
+        \end{axis}
+    \end{tikzpicture}
+    \caption{A plot of measured frequencies with the frequencies from the function generator.}
+    \label{fig:frequencies}
+\end{figure}
+
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Frequency (Hz)},       % Label for the x-axis
+        ylabel={Percentage Error (\%)},       % Label for the y-axis
+        grid=both,               % Add a grid
+    grid style={dotted},
+        width=12cm,              % Adjust width
+        height=8cm,              % Adjust height
+        legend style={at={(0.5,-0.2)}, anchor=north, legend columns=-1},
+        legend cell align={left}
+    ]
+
+        \addplot[
+            color=cyan,         % Line color,
+            mark=*              % Marker style
+        ] 
+        table[
+            col sep=comma,      % Column separator (comma for CSV files)
+            x=Input,                % Specify column for x
+            y=Error                 % Specify column for y
+        ] {tables/freq_measurements.csv};
+   
+    \end{axis}
+\end{tikzpicture}
+
+
 \begin{itemize}[leftmargin=2em]
     \item \textbf{Frequency Calculation Accuracy:} Deviation $<$ 2\%.
     \item \textbf{Resistance Calculation Accuracy:} Robust under varying loads.
     \item \textbf{Noise Mitigation:} Effective filtering techniques implemented.
 \end{itemize}
 
+
+
 % Discussion and Conclusion
-\section{Discussion and Conclusion}
-\subsection{Challenges}
+\section{Discussion}
+\subsection{Challenges and Limitations}
+
+The system can only measure frequencies at certain ranges. It is observed from Section~\ref{subsubsec:results} that it can measure up to approximately 500,000 Hz. Higher frequencies have smaller time period, $T$. As mentioned in section [TBD], it counts the number of counts using the TIM2 counter between two rising edges using the prescaler value set at zero (i.e. at system clock frequency of 48 MHz).  However, the system clock lacks adequate sampling frequency to measure very small periods, which makes the frequency measurement inaccurate.
+
+For a 48 MHz clock, each clock cycle is \textbf{20.83 ns}. The number of counts, \( N \), recorded by the timer for one signal period ($T$) is:
+
+\begin{equation}\label{number_of_counts}
+    N = T \times f_{\text{clock}}
+\end{equation}
+
+Where $T$ is the period of the signal (in seconds), and $f_{\text{clock}}$ is the system clock frequency (48 MHz).
+
+For a high-frequency signal like 600 kHz, the period, $T$ of the signal is:
+$$T = \frac{1}{f_{\text{signal}}} = \frac{1}{600,000} = 1.6667 \, \mu\text{s}$$
+
+Therefore, the number of counts for this frequency are:
+$$N = T \times f_{\text{clock}} = 1.6667 \times 10^{-6} \times 48 \times 10^6 = 80 \, \text{counts}$$
+
+With only 80 counts, a missed or extra clock cycle introduces significant error. For example, a missing \textbf{1 clock cycle} changes $N$ to 79, resulting in:
+    \[
+    \text{Frequency error} = \frac{f_{\text{clock}}}{N} - \frac{f_{\text{clock}}}{N-1}
+    \]
+    \[
+    \text{Error} = \frac{48,000,000}{80} - \frac{48,000,000}{79} \approx 600,000 - 607,595 = 7,595 \, \text{Hz}
+    \]
+This is a \textbf{quantization error} of approximately \textbf{1.27\%} just from missing 1 clock cycle. However, it missed many clock cycles which gave a relative error of about 49.36\%. It is very likely caused by the following criteria:
+
 \begin{itemize}[leftmargin=2em]
-    \item Signal noise required advanced filtering strategies.
-    \item Interrupt handling presented synchronization issues.
+    \item  \textbf{Interrupt Latency:} The microcontroller might not be able to process interrupts fast enough due to delays in handling and returning from interrupts. Therefore, the interrupt handling has caused some synchronization issues.
+    \item \textbf{Jitter and Noise:} At such high frequencies, any signal noise or jitter can cause additional rising edges to be detected erroneously or edges to be missed altogether, introducing further inaccuracies.
 \end{itemize}
+
+The timers in the STM32 have an auto-reload register (\texttt{TIM2->ARR}). The ARR sets the maximum count value of the timer, effectively determining the timer's period. When the timer reaches the defined maximum value, it generates an interrupt. In this code, it resets the count value in the timer to zero. This is done to prevent any overflow issues.
+\\[6pt]
+In the STM32 microcontroller, the ARR is allocated to a finite size of 32 bits due to hardware limitations. The maximum count is determined by the following:
+
+$$N_{\text{max}} = 2^{32} - 1 = 4,294,967,295$$
+
+Therefore, the \textbf{minimum frequency} would be:
+$$f_{\text{min}} = \frac{f_{\text{clock}}}{N_{\text{max}}} = \frac{48,000,000}{4,294,967,295} \approx 0.0112 \text{ Hz}$$
 
 \subsection{Future Work}
 \begin{itemize}[leftmargin=2em]
-    \item Increase sampling rates for improved resolution.
-    \item Integrate advanced noise reduction algorithms.
+    \item \textbf{Integrate advanced noise reduction algorithms:} Implement digital filters (e.g., low-pass or notch filters) in the firmware to reduce jitter and signal noise in high-frequency measurements.
+
+    \item \textbf{Consider microcontrollers with higher clock frequencies:} Migrate to a microcontroller with a faster system clock (e.g., 72 MHz or higher) to:
+    \begin{itemize}[leftmargin=2em]
+        \item Achieve finer timer granularity for shorter periods.
+        \item Reduce the risk of missing high-frequency edges due to interrupt latency or slow execution.
+        \item Expand the measurable frequency range without introducing inaccuracies.
+    \end{itemize}
+
+    \item \textbf{Utilize timer chaining for extended range:} Combine multiple timers (e.g. TIM2, TIM3, TIM16, etc.) to measure very low frequencies without encountering timer overflow, extending the detectable frequency range.
+
+    \item \textbf{Introduce dynamic prescaling:} Implement an adaptive prescaler to automatically adjust timer resolution based on signal frequency, ensuring better accuracy across a wide range of frequencies.
+
+    % \item Explore DMA integration.**
+    % - Use Direct Memory Access (DMA) to offload data collection tasks from the CPU, enabling smoother and faster processing of high-frequency signals.
+
+    \item \textbf{Enable multi-channel frequency detection:} Add support for simultaneous frequency measurement on multiple signal inputs using additional GPIO pins and timers.
+
+
 \end{itemize}
 
-\subsection{Conclusion}
+\section{Conclusion}
 The project demonstrates a reliable, modular design for real-time signal processing, providing a strong foundation for further enhancements.
 
 % References
