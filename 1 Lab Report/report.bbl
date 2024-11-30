@@ -1,0 +1,201 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global/global}
+  \entry{ne555-timer-datasheet}{manual}{}{}
+    \name{author}{1}{}{%
+      {{hash=S}{%
+         family={STMicroelectronics},
+         familyi={S\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{S1}
+    \strng{fullhash}{S1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{General-purpose single bipolar timers}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab/supplement/555timer.pdf
+    \endverb
+    \field{year}{2014}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{4n35-datasheet}{manual}{}{}
+    \name{author}{1}{}{%
+      {{hash=SV}{%
+         family={Semiconductors},
+         familyi={S\bibinitperiod},
+         given={Vishay},
+         giveni={V\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{SV1}
+    \strng{fullhash}{SV1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Optocoupler, Phototransistor Output, with Base Connection}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab/supplement/4n35.pdf
+    \endverb
+    \field{year}{2010}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{lab-manual}{manual}{}{}
+    \name{author}{2}{}{%
+      {{hash=UoVDoE}{%
+         prefix={University\bibnamedelima of},
+         prefixi={U\bibinitperiod\bibinitdelim o\bibinitperiod},
+         family={Victoria},
+         familyi={V\bibinitperiod},
+         given={Department of\bibnamedelima Electrical},
+         giveni={D\bibinitperiod\bibinitdelim o\bibinitperiod\bibinitdelim
+  E\bibinitperiod},
+      }}%
+      {{hash=EC}{%
+         family={Engineering},
+         familyi={E\bibinitperiod},
+         given={Computer},
+         giveni={C\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{VDoEUoEC1}
+    \strng{fullhash}{VDoEUoEC1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{ECE 355 Lab Manual}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab
+    \endverb
+    \field{year}{2024}
+  \endentry
+
+  \entry{stm32-datasheet}{manual}{}{}
+    \name{author}{1}{}{%
+      {{hash=S}{%
+         family={STMicroelectronics},
+         familyi={S\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{S1}
+    \strng{fullhash}{S1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{STM32F051R8T6 Datasheet}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab/supplement/stm32f051r8t6_datatshe
+    \verb et_DM00039193.pdf
+    \endverb
+    \field{year}{2014}
+  \endentry
+
+  \entry{iox}{misc}{}{}
+    \name{author}{1}{}{%
+      {{hash=RD}{%
+         family={Rakhmatov},
+         familyi={R\bibinitperiod},
+         given={D.N.},
+         giveni={D\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {University of Victoria}%
+    }
+    \strng{namehash}{RD1}
+    \strng{fullhash}{RD1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{note}{Adopted from STM32F0xx Advanced ARM-based 32-bit MCUs
+  Reference Manual, © 2014 STMicroelectronics and other datasheets.}
+    \field{title}{I/O Examples}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab/iox.pdf
+    \endverb
+    \field{year}{2024}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{interfacex}{misc}{}{}
+    \name{author}{1}{}{%
+      {{hash=RD}{%
+         family={Rakhmatov},
+         familyi={R\bibinitperiod},
+         given={D.N.},
+         giveni={D\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {University of Victoria}%
+    }
+    \strng{namehash}{RD1}
+    \strng{fullhash}{RD1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{note}{Adopted from STM32F0xx Advanced ARM-based 32-bit MCUs
+  Reference Manual, © 2014 STMicroelectronics and other datasheets.}
+    \field{title}{Interfacing Examples}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab/interfacex.pdf
+    \endverb
+    \field{year}{2024}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{SSD1306_Datasheet}{report}{}{}
+    \list{organization}{1}{%
+      {{Solomon Systech}}%
+    }
+    \field{labeltitlesource}{title}
+    \field{title}{SSD1306 OLED Display Driver Datasheet}
+    \verb{url}
+    \verb https://www.ece.uvic.ca/~ece355/lab/supplement/SSD1306.pdf
+    \endverb
+    \list{institution}{1}{%
+      {Solomon Systech}%
+    }
+    \field{type}{techreport}
+    \field{year}{2008}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{uvic_equipment_handbook}{manual}{}{}
+    \name{author}{1}{}{%
+      {{hash=U}{%
+         family={{University of Victoria, Department of Electrical and Computer
+  Engineering}},
+         familyi={U\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {University of Victoria}%
+    }
+    \strng{namehash}{U1}
+    \strng{fullhash}{U1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Equipment Handbook for Undergraduate Students}
+    \verb{url}
+    \verb https://www.uvic.ca/ecs/ece/assets/docs/current/undergraduate/Equipme
+    \verb nt-handbook.pdf
+    \endverb
+    \field{year}{2018}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+\enddatalist
+\endinput

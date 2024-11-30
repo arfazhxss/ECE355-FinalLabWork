@@ -4,7 +4,7 @@ Throughout the development process, several challenges were encountered that req
 \begin{itemize}[leftmargin=2em]
     \item \textbf{Signal Noise:} The presence of electrical noise in the ADC and DAC circuits impacted measurement accuracy, necessitating the implementation of decoupling capacitors and basic filtering strategies to stabilize readings.
     \item \textbf{Interrupt Synchronization:} Managing multiple interrupts for mode switching and signal frequency measurement introduced timing conflicts, which were mitigated through careful prioritization and interrupt-driven control logic.
-    \item \textbf{Frequency Range Limitations:} The system's maximum detectable frequency was constrained by the resolution of TIM2 and EXTI latency, presenting a challenge in achieving higher measurement ranges.
+    \item \textbf{Frequency Range Limitations:} It is observed from Section \ref{sec:freq_measurement} that the frequency can be measured within a certain range. The system's maximum detectable frequency was constrained by the resolution of interrupt latency, presenting a challenge in achieving higher measurement ranges. Similarly, the system's minimum frequency is only limited by the auto-reload register of the clock timer.
 \end{itemize}
 
 \subsection{Future Work}
@@ -12,6 +12,8 @@ The current system provides a solid baseline, but there are several areas for en
 \begin{itemize}[leftmargin=2em]
     \item \textbf{Improved Sampling Rates:} Upgrading the ADC sampling rate and optimizing data acquisition would allow more precise measurements, particularly for rapidly varying signals.
     \item \textbf{Advanced Noise Reduction:} Implementing digital signal processing (DSP) techniques, such as low-pass filters or averaging algorithms, could further reduce the impact of noise on system performance.
+    \item \textbf{Utilize timer chaining for extended range:} Combine multiple timers (e.g. TIM2, TIM3, TIM16, etc.) to measure very low frequencies without encountering timer overflow, extending the detectable frequency range.
+    \item \textbf{Introduce dynamic prescaling:} Implement an adaptive prescaler to automatically adjust timer resolution based on signal frequency, ensuring better accuracy across a wide range of frequencies.
     \item \textbf{Extended Frequency Range:} Hardware upgrades or optimized software configurations could extend the system's maximum detectable frequency range, improving versatility.
     \item \textbf{Enhanced User Interface:} Expanding the OLED display to include graphical visualizations of signals and system states could improve user interaction.
 \end{itemize}

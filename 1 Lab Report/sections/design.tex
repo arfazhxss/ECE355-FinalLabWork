@@ -14,8 +14,8 @@ The system is designed as an integrated hardware-software solution focusing on r
 
 \subsubsection{Operational Modes}
 \begin{itemize}
-    \item Function Generator Mode: Displays frequency and resistance measurements
-    \item ADC/DAC Mode: Shows real-time ADC input and DAC output values
+    \item \textbf{Function Generator Mode:} Displays measured frequency from the function generator
+    \item \textbf{NE555 Timer Mode:} Display the 555 Timer Frequency
 \end{itemize}
 
 \subsubsection{System Integration}
@@ -26,19 +26,22 @@ The system is designed as an integrated hardware-software solution focusing on r
     \item User interface management
 \end{itemize}
 
-\input{sections/sys-design-diagram.tex}
+\noindent[0pt] The block diagram in Figure \ref{fig:systemoverview} The diagram illustrates the interconnections between various hardware modules and highlights the system's input, processing, and output stages, making it a typical system-level design representation for an embedded electronic device.
+
+\begin{figure}[H]
+    \centering
+    \input{sections/sys-design-diagram}
+    \caption{STM32F0 Microcontroller System Block Diagram}
+    \label{fig:systemoverview}
+\end{figure}
+
+% \input{sections/sys-design-diagram}
 
 \subsection{Hardware Design}
 
 \subsubsection{Block Diagram}
-\begin{figure}[tbph]
-  \centering
-  \includegraphics[width=0.7\linewidth]{graphics/system_blocks}
-  \caption{System architecture showing the interaction between major components of the frequency measurement and signal generation system}
-  \label{fig:systemblocks}
-\end{figure}
 
-The hardware architecture consists of the following interconnected components:
+The hardware architecture (Figure \ref{fig:systemblocks}) consists of the following interconnected components:
 \begin{itemize}
     \item STM32F051R8 microcontroller (central processor)
     \item Input devices (potentiometer, function generator)
@@ -46,7 +49,14 @@ The hardware architecture consists of the following interconnected components:
     \item Control interfaces (mode-switch button)
 \end{itemize}
 
-\subsubsection{Hardware Components}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{graphics/system_blocks}
+    \caption{System architecture showing the interaction between major components of the frequency measurement and signal generation system \cite{lab-manual}}
+    \label{fig:systemblocks}
+\end{figure}
+
+\subsubsection{Hardware Components~\cite{lab-manual}}
 \begin{itemize}
     \item \textbf{STM32F051R8 Microcontroller:} Central processing unit
     \item \textbf{Potentiometer:} Analog input source
@@ -55,9 +65,9 @@ The hardware architecture consists of the following interconnected components:
     \item \textbf{Passive Components:} Signal conditioning
 \end{itemize}
 
-\subsubsection{Pin Configuration}
+\subsubsection{Pin Configuration~\cite{lab-manual}}
 \begin{itemize}
-     \item PA0: USER button interrupt handling (EXTI0)
+     \item PA0: USER button interrupt handling (EXTI0) 
      \item PA1: NE555 timer signal measurement (EXTI1)
      \item PA2: Function generator frequency measurement (EXTI2)
     \item PA4: DAC output for optocoupler control
@@ -65,11 +75,16 @@ The hardware architecture consists of the following interconnected components:
     \item PB3-PB7: SPI and control signals for OLED display
 \end{itemize}
 
-\input{sections/pin-diagram}
+\begin{figure}[H]
+    \centering
+    \input{sections/pin-diagram}
+    \caption{Pin Configurations of the GPIO Pins \cite{lab-manual}}
+    \label{fig:pinconfig}
+\end{figure}
 
 \subsubsection{Power Distribution}
 \begin{itemize}
-    \item Main supply: 3.3V regulated
+    \item Main supply: 3.3 V Power Supply (Allowable $V_{DD}$: 2.0 to 3.6 V \cite{stm32-datasheet})
     \item Separate analog/digital grounds
     \item Decoupling capacitors for noise reduction
 \end{itemize}
@@ -77,13 +92,13 @@ The hardware architecture consists of the following interconnected components:
 \newpage
 
 \section{Software Design}
-The software is modularly designed to ensure maintainability and easy debugging. Key initialization functions and operational logic are outlined below.
+The software is designed with the intent of maintainability and debugging. However, there is room for improvement in modularization (except for the OLED screen) to better achieve these goals. Key initialization functions and operational logic are outlined below.
 
 \subsection{Initialization Functions}
-The initialization functions configure the system's peripherals, including the GPIO, ADC, DAC, and timers.
+The examples of the initialization functions from the project configure the system's peripherals, including the GPIO, ADC, DAC, and timers. (See Appendices \ref{sec:main_c} and \ref{sec:oled_screen_c} for the full code.)
 
 \subsubsection{System Clock}
-\begin{lstlisting}[caption=System Clock Initialization Function]
+\begin{lstlisting}[caption=System Clock Initialization Function \cite{iox}]
 void SystemClock48MHz(void) {
     // Disable the PLL
     RCC->CR &= ~(RCC_CR_PLLON);
@@ -103,7 +118,7 @@ void SystemClock48MHz(void) {
 \end{lstlisting}
 
 \subsubsection{GPIO Initialization}
-\begin{lstlisting}[caption=GPIO Port A Initialization Function]
+\begin{lstlisting}[caption=GPIO Port A Initialization Function \cite{iox}]
 void myGPIOA_Init(void) {
     // Enable GPIOA clock
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
@@ -126,8 +141,9 @@ void myGPIOA_Init(void) {
 }
 \end{lstlisting}
 
+
 \subsubsection{ADC and DAC Initialization}
-\begin{lstlisting}[caption=ADC Initialization Function]
+\begin{lstlisting}[caption=ADC and DAC Initialization Function \cite{interfacex}]
 void myADC_Init(void) {
     // Enable ADC clock
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
@@ -161,7 +177,7 @@ void myDAC_init(void) {
 \end{lstlisting}
 
 \subsubsection{Timer (TIM2) Initialization}
-\begin{lstlisting}[caption=Timer 2 Initialization Function]
+\begin{lstlisting}[caption=Timer 2 Initialization Function \cite{iox}]
 void myTIM2_Init(void) {
     // Enable clock for TIM2
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
@@ -182,7 +198,7 @@ void myTIM2_Init(void) {
 \end{lstlisting}
 
 \subsubsection{External Interrupt Initialization}
-\begin{lstlisting}[caption=EXTI Initialization Function]
+\begin{lstlisting}[caption=EXTI Initialization Function \cite{iox}]
 void EXTI_Init(void) {
     // Map EXTI2 and EXTI0 lines to PA2 and PA0 respectively
     SYSCFG->EXTICR[0] &= ~(SYSCFG_EXTICR1_EXTI0 | SYSCFG_EXTICR1_EXTI1 | SYSCFG_EXTICR1_EXTI2);
@@ -205,8 +221,9 @@ void EXTI_Init(void) {
 
 \subsection{Core Logic}
 
-\subsubsection{Signal Measurement}
-\begin{lstlisting}[caption=ADC Reading Function]
+\subsubsection{Signal Measurement and Reconstruction}
+\begin{lstlisting}[caption=ADC Reading and DAC Writing Function \cite{interfacex}]
+// ADC Reading (Measurement)
 uint32_t readADC(void) {
     // Start ADC conversion
     ADC1->CR |= ADC_CR_ADSTART;
@@ -217,25 +234,40 @@ uint32_t readADC(void) {
     // Return the ADC result
     return ADC1->DR;
 }
+
+// Write to DAC (Reconstruction)
+void writeDAC(uint32_t adc_val)
+{
+	// DHR12R1 is the 12-bit right-aligned data
+	DAC->DHR12R1 = adc_val;
+}
 \end{lstlisting}
 
 \subsubsection{Frequency and Resistance Computation}
 \begin{lstlisting}[caption=Frequency and Resistance Computation]
 void measure_frequency(unsigned int bit_number, unsigned int* var_address) {
+    // Assign some necessary variables
     unsigned int count = 0;
     float period = 0;
     float frequency = 0;
+    // Compute the register mask by bit number
     uint32_t register_mask = EXTI_PR_PR0 << bit_number;
 
+    /* Check if EXTI2 interrupt pending flag is indeed set */
     if ((EXTI->PR & register_mask) != 0) {
+        // If this is the first 'rising' edge:
         if((TIM2->CR1 & TIM_CR1_CEN) == 0) {
-            TIM2->CNT = 0;
-            TIM2->CR1 |= TIM_CR1_CEN;
-        } else {
-            TIM2->CR1 &= ~(TIM_CR1_CEN);
+            TIM2->CNT = 0;   // Clear count register
+            TIM2->CR1 |= TIM_CR1_CEN;   // Start the timer
+        } else {    // Otherwise, this is the second edge
+            TIM2->CR1 &= ~(TIM_CR1_CEN);   // Stop timer
+            // Read out count register 
             count = TIM2->CNT;
+            // Calculate the frequency
             period = (float)count / (float)SystemCoreClock;
             frequency = 1 / period;
+            // 'var_address' - variable where the frequency is stored
+            // Update the 'var_address'
             *var_address = (unsigned int)(frequency);
         }
         EXTI->PR |= register_mask;
@@ -267,7 +299,7 @@ void toggle_mode(void) {
 }
 \end{lstlisting}
 
-\subsubsection{Button Press Handling}
+\subsubsection{Button Press Handling \cite{iox}}
 \begin{lstlisting}[caption=Button Push Handler Function]
 void button_push(void) {
     // Check for a pending interrupt on PA0
@@ -286,7 +318,7 @@ void button_push(void) {
 \end{lstlisting}
 
 \subsection{Utilities}
-\subsubsection{Timer Interrupt Handling}
+\subsubsection{Timer Interrupt Handling \cite{iox}}
 \begin{lstlisting}[caption=Timer 2 Interrupt Handler]
 void TIM2_IRQHandler(void) {
     if ((TIM2->SR & TIM_SR_UIF) != 0) {
@@ -301,6 +333,9 @@ void TIM2_IRQHandler(void) {
 \end{lstlisting}
 
 \subsubsection{Value Computation}
+From the 12-bit ADC Value, the resistance is calculated using the following equation:
+$$R_{pot} = \frac{ADC_{value}}{4095} \times 5000 \text{ } \Omega$$
+
 \begin{lstlisting}[caption=Resistance Calculation Function]
 unsigned int toOhms(uint32_t adc_val) {
     return (unsigned int)(((float)adc_val/4095.0) * 5000.0);
@@ -329,17 +364,20 @@ void EXTI2_3_IRQHandler(void) {
 
 \subsection{Key Features}
 
-\subsubsection{Signal Measurement}
+\subsubsection{Signal Measurement and Generation}
 \begin{itemize}
     \item \texttt{readADC()}: Captures analog signals using the ADC with 12-bit resolution. This function is critical for converting the potentiometer's voltage into digital values for resistance calculation.
     \item \texttt{measure\_frequency()}: Accurately measures the frequency of input signals by utilizing hardware timers (TIM2) and external interrupt-driven edge detection. The function processes input from either the NE555 timer or the function generator, depending on the operational mode.
-    \item Real-time signal processing pipeline ensures continuous monitoring and response to input changes.
+    \\[6pt]
+    The period is determined by the number of system clock counts (48 MHz) between the two rising edges. This leads to the following equation:
+    $$T = \frac{f_{\text{system clock}}}{N_{count}}$$
+    Since $F = \frac{1}{T}$,
+    $$F_{measured} = \frac{N_{count}}{f_{\text{system clock}}}$$
 \end{itemize}
 
 \subsubsection{Signal Generation}
 \begin{itemize}
     \item \texttt{writeDAC()}: Outputs analog signals to external devices through the DAC, which is synchronized with ADC inputs to provide scaled responses. This functionality ensures smooth signal generation for external circuit testing.
-    \item Dynamic signal scaling ensures that the output adapts to varying input conditions, offering robust signal handling capabilities.
     \item Continuous signal monitoring allows seamless integration between input (ADC) and output (DAC) processes.
 \end{itemize}
 
@@ -356,43 +394,87 @@ void EXTI2_3_IRQHandler(void) {
 
 \subsubsection{Synchronization}
 \begin{itemize}
-    \item \textbf{Interrupt-Driven Architecture}: 
+    \item \textbf{Interrupt-Driven Architecture~\cite{iox}}: 
         \begin{itemize}
             \item Utilizes external interrupts (EXTI) for precise event handling, enabling accurate frequency and signal measurements.
             \item Minimizes CPU overhead by offloading tasks to hardware interrupts, improving efficiency and responsiveness.
         \end{itemize}
-    \item \textbf{Hardware-Timer-Based Synchronization}:
+    \item \textbf{Hardware-Timer-Based Synchronization~\cite{iox}}:
         \begin{itemize}
             \item TIM2 is configured to provide high-resolution timing for frequency measurement, ensuring accuracy even at high signal rates.
-            \item Overflow detection and interrupt handling prevent timing inaccuracies during long-duration measurements.
+            \item Overflow detection and interrupt handling~\cite{iox} prevent timing inaccuracies during long-duration measurements.
         \end{itemize}
-    \item \textbf{ADC-DAC Synchronization}: Ensures seamless operation between input signal acquisition and output signal generation, minimizing latency and improving system performance.
-    \item \textbf{OLED Display Updates}: The system synchronizes signal measurements with visual output, ensuring that displayed data is both current and accurate.
+    \item \textbf{ADC-DAC Synchronization~\cite{stm32-datasheet}}: Ensures seamless operation between input signal acquisition and output signal generation, minimizing latency and improving system performance.
+    \item \textbf{OLED Display Updates~\cite{SSD1306_Datasheet}}: The system synchronizes signal measurements with visual output, ensuring that displayed data is both current and accurate.
 \end{itemize}
+
+\subsubsection{OLED Screen Operation}
+\begin{itemize}
+    \item \textbf{Initialization:} The OLED screen is initialized through a series of configuration steps. These include setting up GPIO pins, SPI communication, and a timer (TIM3) \cite{interfacex}. Initialization commands are then sent to the OLED controller to configure the display's operating mode. These commands include the following: 
+    \begin{enumerate}
+        \item Enabling the display
+        \item Setting addressing modes
+        \item Clearing the screen memory (GDDRAM) by writing zeros across all segments on each page
+    \end{enumerate}
+
+    \item \textbf{Writing to the Screen:} Characters are displayed on the OLED by sending their bitmap representations from a predefined character map to the screen's GDDRAM. Each character is represented by an 8-byte array, with each byte corresponding to a segment of the character by multiples of 8 \cite{interfacex}. This uses the following functions: 
+        \begin{itemize}
+            \item \texttt{oled\_print()}: Iterates through the input buffer of characters, selecting the appropriate page and segment, and writing the character data using the \texttt{oled\_write\_data}.
+            \item \texttt{oled\_Write\_Data()}: Sends a data byte to the OLED controller for display in its memory (GDDRAM).
+        \end{itemize}
+    \item \textbf{Page Segmenting:} The display memory is divided into pages (rows) and segments (columns) as shown in Figure \ref{fig:addressmemory} \cite{SSD1306_Datasheet}. This makes use of the following functions:
+        \begin{itemize}
+            \item \texttt{set\_Page}: selects the row where data will be written. This uses \texttt{oled\_write\_cmd} which passes 8 bits of data, where the second nybble should be of a hexadecimal digit \texttt{0xB}. (e.g. For page 4, the system should send \textbf{0xB4}.)
+            \item \texttt{set\_Segment}: Specifies the column where data will be written. This also uses \texttt{oled\_write\_cmd}, where the second nybble should be: 
+            \begin{itemize}
+                \item \textbf{Hexadecimal digit 0x0} for the first four bits of the column (e.g. for column 65 (0x41), 0x1 represents the first four bits, so send \textbf{0x01}.)
+                \item \textbf{Hexadecimal digit 0x1} for the last four bits of the column (e.g. for column 65 (0x41), 0x4 represents the last four bits, so send \textbf{0x14}.)
+            \end{itemize}
+
+            These functions send appropriate commands to the OLED to position the address pointer, and then moves on to the next segment everytime a character is written. For example, to print "HELLO!" starting at page 3, column 1, the program fills out 48 segments from segment 8 to 55 in the screen memory.
+
+        \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{graphics/address_pointer}
+        \caption{Rows and columns of the address memory, with the address pointer movement \cite{SSD1306_Datasheet}}
+        \label{fig:addressmemory}
+    \end{figure}
+
+    \item \textbf{Memory Location and Character Position:} Each character's position on the screen is determined by its row and column, corresponding to the page and segment in memory. For example, ASCII characters are mapped to the predefined character array, where the ASCII code determines the row in the array, and the bytes represent the visual representation of the character. This mechanism ensures a precise correspondence between memory locations and the screen's display layout.
+    \item \textbf{Refreshing the OLED:} The OLED display is periodically refreshed using the TIM3 timer to ensure that updated information is consistently displayed. The \texttt{refresh\_OLED} function is triggered based on the timer's count reaching a predefined threshold of about 4800 counts. Meaning, that the screen must refresh every $\frac{4800}{48000 \text{ Hz}} = 100 \text{ ms}$ \cite{interfacex}. During each refresh cycle, relevant data such as resistance and frequency values are formatted into strings and displayed on specific pages of the OLED screen using the \texttt{oled\_print} function. The timer ensures accurate timing for updates, and the \texttt{TIM3\_delay} function is used to introduce small delays during initialization and resetting processes. This mechanism maintains a responsive and stable display update rate.
+        
+\end{itemize}
+
+\noindent The designed C module for the OLED screen header and source file is shown in Appendix \ref{sec:oled_screen_c}.
+
+
+
 
 \subsection{Peripheral Justification}
 \begin{itemize}
-    \item \textbf{ADC/DAC}: 
+    \item \textbf{ADC/DAC~\cite{interfacex}}: 
         \begin{itemize}
             \item The ADC (12-bit resolution) is crucial for precise analog-to-digital conversion of input signals from the potentiometer.
             \item The DAC enables scalable analog output, supporting external signal generation and circuit testing.
         \end{itemize}
-    \item \textbf{TIM2}:
+    \item \textbf{TIM2~\cite{iox}}:
         \begin{itemize}
             \item Provides precise timing for frequency measurement by counting clock cycles between signal edges.
             \item Supports high-speed signal processing with overflow detection to ensure robustness in varying signal conditions.
         \end{itemize}
-    \item \textbf{GPIO}:
+    \item \textbf{GPIO~\cite{iox}}:
         \begin{itemize}
             \item Handles user button inputs and external signal connections.
             \item Configures specific pins (PA0, PA1, PA2) for input signals and mode control.
         \end{itemize}
-    \item \textbf{EXTI}: 
+    \item \textbf{EXTI~\cite{iox}}: 
         \begin{itemize}
             \item Enables hardware-based edge detection for signal frequency measurement.
             \item Critical for capturing precise timing events without CPU intervention, ensuring low-latency performance.
         \end{itemize}
-    \item \textbf{OLED Display}: 
+    \item \textbf{OLED Display~\cite{interfacex}}: 
         \begin{itemize}
             \item The SSD1306-based display provides a user-friendly interface to present real-time measurements and system status.
             \item SPI communication ensures efficient data transfer, supporting real-time updates.
