@@ -103,7 +103,7 @@ With only 80 counts, only one missed or extra clock cycle introduces significant
     \text{Frequency error} = \frac{f_{\text{clock}}}{N} - \frac{f_{\text{clock}}}{N-1}
     \]
     \[
-    \text{Error} = \frac{48,000,000}{80} - \frac{48,000,000}{79} \approx 600,000 - 607,595 = 7,595 \, \text{Hz}
+    \text{Error} = \left|\frac{48,000,000}{80} - \frac{48,000,000}{79}\right| \approx \left|600,000 - 607,595\right| = 7,595 \, \text{Hz}
     \]
 This results in a \textbf{quantization error} of approximately \textbf{1.27\%} just from missing 1 clock cycle. However, it missed many clock cycles which gave a relative error of about 49.36\%. It is very likely caused by the following criteria:
 
