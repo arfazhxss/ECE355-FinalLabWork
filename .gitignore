@@ -50,3 +50,15 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# MikTeX Kernel files
+.*-blx\.bib
+*.aux
+*.bll
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run\.xml
+*.toc

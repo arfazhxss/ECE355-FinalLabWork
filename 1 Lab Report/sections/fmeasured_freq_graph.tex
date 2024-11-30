@@ -1,0 +1,35 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Frequency (Hz)},       % Label for the x-axis
+        ylabel={Measured Frequency (Hz)},       % Label for the y-axis
+        grid=both,               % Add a grid
+    grid style={dotted},
+        width=12cm,              % Adjust width
+        height=8cm,              % Adjust height
+        legend style={at={(0.5,-0.2)}, anchor=north, legend columns=-1},
+        legend entries={Expected Curve, Actual Curve},
+        legend cell align={left}
+    ]
+        \addplot[
+            color=blue,         % Line color,
+            dashed,
+            mark=*              % Marker style
+        ] 
+        table[
+            col sep=comma,      % Column separator (comma for CSV files)
+            x=Input,                % Specify column for x
+            y=Expected                 % Specify column for y
+        ] {tables/freq_measurements.csv};
+
+        \addplot[
+            color=red,         % Line color,
+            mark=*              % Marker style
+        ] 
+        table[
+            col sep=comma,      % Column separator (comma for CSV files)
+            x=Input,                % Specify column for x
+            y=Measured                 % Specify column for y
+        ] {tables/freq_measurements.csv};
+   
+    \end{axis}
+\end{tikzpicture}

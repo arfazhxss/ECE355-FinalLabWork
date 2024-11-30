@@ -34,7 +34,12 @@
     \node[box] (pa2) [below=0.5cm of pa1] {PA2:\\ FGen Input};
     \node[box] (pa4) [below=0.5cm of pa2] {PA4:\\ DAC Output};
     \node[box] (pa5) [below=0.5cm of pa4] {PA5:\\ ADC Input};
-    \node[group] (stm32) [fit=(pa0) (pa1) (pa2) (pa4) (pa5)] {};
+    \node[box] (pb3) [below=0.5cm of pa5] {PB3:\\ OLED SCLK Output};
+    \node[box] (pb4) [below=0.5cm of pb3] {PB4:\\ OLED RES\# Output};
+    \node[box] (pb5) [below=0.5cm of pb4] {PB5:\\ OLED SDIN Output};
+    \node[box] (pb6) [below=0.5cm of pb5] {PB6:\\ OLED CS\# Output};
+    \node[box] (pb7) [below=0.5cm of pb6] {PB7:\\ OLED D/C\# Output};
+    \node[group] (stm32) [fit=(pa0) (pa1) (pa2) (pa4) (pa5) (pb3) (pb4) (pb5) (pb6) (pb7)] {};
     \node[above, font=\bfseries] at (stm32.north) {STM32F0};
 \end{scope}
 
@@ -45,7 +50,9 @@
     \node[box] (freq2) [below=0.5cm of freq1] {Frequency Input Mode};
     \node[box] (anaout) [below=0.5cm of freq2] {Analog Output Mode};
     \node[box] (anain) [below=0.5cm of anaout] {Analog Input Mode};
-    \node[group] (features) [fit=(dig) (freq1) (freq2) (anaout) (anain)] {};
+    \node[box] (screenout) [below=0.5cm of anain] {Screen Output Mode};
+    \node[box] (screenout2) [below=0.5cm of screenout] {Screen Output Mode};
+    \node[group] (features) [fit=(dig) (freq1) (freq2) (anaout) (anain) (screenout) (screenout2)] {};
     \node[above, font=\bfseries] at (features.north) {Features};
 \end{scope}
 
@@ -56,7 +63,9 @@
     \node[box] (freq2char) [below=0.5cm of freq1char] {No pull-up/down\\ EXTI enabled};
     \node[box] (dacchar) [below=0.5cm of freq2char] {12-bit resolution\\ 0.126-2.23V range};
     \node[box] (adcchar) [below=0.5cm of dacchar] {12-bit resolution\\ 0-3.3V range};
-    \node[group] (chars) [fit=(btnchar) (freq1char) (freq2char) (dacchar) (adcchar)] {};
+    \node[box] (output) [below=0.5cm of adcchar] {No pull-up/down\\ Alternate function};
+    \node[box] (afoutput) [below=0.5cm of output] {No pull-up/down\\ Push-pull output type};
+    \node[group] (chars) [fit=(btnchar) (freq1char) (freq2char) (dacchar) (adcchar) (output) (afoutput)] {};
     \node[above, font=\bfseries] at (chars.north) {Characteristics};
 \end{scope}
 
@@ -66,11 +75,18 @@
 \draw[connection, green!50!black] (pa2) -- (freq2);
 \draw[connection, orange] (pa4) -- (anaout);
 \draw[connection, purple] (pa5) -- (anain);
+\draw[connection, magenta] (pb3) -- (screenout);
+\draw[connection, magenta] (pb5) -- (screenout);
+\draw[connection, cyan] (pb4) -- (screenout2);
+\draw[connection, cyan] (pb6) -- (screenout2);
+\draw[connection, cyan] (pb7) -- (screenout2);
 
 \draw[connection, blue] (dig) -- (btnchar);
 \draw[connection, red] (freq1) -- (freq1char);
 \draw[connection, green!50!black] (freq2) -- (freq2char);
 \draw[connection, orange] (anaout) -- (dacchar);
 \draw[connection, purple] (anain) -- (adcchar);
+\draw[connection, magenta] (screenout) -- (output);
+\draw[connection, cyan] (screenout2) -- (afoutput);
 
 \end{tikzpicture}
